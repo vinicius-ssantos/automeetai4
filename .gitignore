@@ -1,0 +1,79 @@
+##############################
+# Python / Poetry / Pip
+##############################
+# Compilados
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+
+# Ambientes virtuais
+.venv/
+env/
+venv/
+
+# Logs e relatórios
+*.log
+*.coverage
+coverage.xml
+htmlcov/
+
+# Ferramentas de tipagem / lint
+.mypy_cache/
+.pytest_cache/
+ruff_cache/
+
+##############################
+# IDEs e editores
+##############################
+# VS Code
+.vscode/
+# PyCharm
+.idea/
+*.iml
+
+##############################
+# Configurações sensíveis
+##############################
+# Variáveis de ambiente e segredos
+.env
+.env.*
+*.secrets.*
+*.key
+*.pem
+
+# Arquivo de preferências de usuário que contém chaves de API
+user_preferences.json
+# Caso você queira manter um example:
+!user_preferences.example.json
+
+##############################
+# Dados gerados pela aplicação
+##############################
+# Áudio, vídeo e transcrições temporárias
+output/
+*.wav
+*.mp3
+*.mp4
+*.jsonl
+*.srt
+*.vtt
+
+# Modelos locais grandes
+models/
+*.gguf
+*.bin
+
+##############################
+# Build / distribuição
+##############################
+build/
+dist/
+*.egg-info/
+.eggs/
+
+##############################
+# Outros
+##############################
+.DS_Store
+Thumbs.db
