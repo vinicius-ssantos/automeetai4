@@ -89,3 +89,6 @@ tests/.hypothesis/unicode_data/
 
 # Test preferences file (used for testing only)
 test_preferences.json
+
+# Temporary output files
+.output.txt
