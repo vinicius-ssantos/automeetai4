@@ -77,6 +77,6 @@ dist/
 ##############################
 .DS_Store
 Thumbs.db!/tests/.hypothesis/examples/
-!/tests/.hypothesis/unicode_data/
+/tests/.hypothesis/unicode_data/
 
-!/.streamlit/secrets.toml
+/.streamlit/secrets.toml
