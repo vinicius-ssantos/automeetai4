@@ -79,3 +79,4 @@ dist/
 Thumbs.db!/tests/.hypothesis/examples/
 !/tests/.hypothesis/unicode_data/
 
+!/.streamlit/secrets.toml
