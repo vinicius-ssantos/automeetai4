@@ -76,4 +76,6 @@ dist/
 # Outros
 ##############################
 .DS_Store
-Thumbs.db
+Thumbs.db!/tests/.hypothesis/examples/
+!/tests/.hypothesis/unicode_data/
+
