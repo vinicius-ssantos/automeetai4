@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, List, Union
 import os
-import openai
+from openai import OpenAI
+from openai.types.audio import Transcription
 from src.interfaces.transcription_service import TranscriptionService
 from src.interfaces.config_provider import ConfigProvider
 from src.utils.file_utils import validate_file_path
@@ -53,8 +54,8 @@ class WhisperTranscriptionService(TranscriptionService):
         # Valida a chave de API
         self._validate_api_key(api_key)
 
-        if api_key:
-            openai.api_key = api_key
+        # Initialize OpenAI client
+        self.client = OpenAI(api_key=api_key) if api_key else None
 
     def _validate_api_key(self, api_key: Optional[str]) -> None:
         """
@@ -119,11 +120,17 @@ class WhisperTranscriptionService(TranscriptionService):
             # Aguarda um token ficar disponível (limitação de taxa)
             rate_limiter.consume(wait=True)
 
+            # Verifica se o cliente foi inicializado
+            if not self.client:
+                error_msg = "OpenAI client is not initialized. Please provide a valid API key."
+                self.logger.error(error_msg)
+                return None
+
             # Abre o arquivo de áudio
             with open(audio_file, "rb") as audio:
                 # Chama a API Whisper
                 self.logger.info(f"Transcrevendo arquivo de áudio: {audio_file}")
-                response = openai.Audio.transcribe(
+                response = self.client.audio.transcriptions.create(
                     file=audio,
                     model=transcription_config["model"],
                     language=transcription_config["language"],
@@ -144,23 +151,18 @@ class WhisperTranscriptionService(TranscriptionService):
             self.logger.error(error_msg)
             return None
 
-        except openai.error.AuthenticationError as e:
-            error_msg = f"Erro de autenticação OpenAI: {e}"
+        except ImportError as e:
+            error_msg = f"OpenAI library not properly installed: {e}"
             self.logger.error(error_msg)
             return None
 
-        except openai.error.RateLimitError as e:
-            error_msg = f"Limite de taxa OpenAI excedido: {e}"
+        except ConnectionError as e:
+            error_msg = f"Network error during OpenAI API call: {e}"
             self.logger.error(error_msg)
             return None
 
-        except openai.error.Timeout as e:
-            error_msg = f"Tempo limite da solicitação OpenAI: {e}"
-            self.logger.error(error_msg)
-            return None
-
-        except openai.error.APIError as e:
-            error_msg = f"Erro da API OpenAI: {e}"
+        except TimeoutError as e:
+            error_msg = f"Timeout during OpenAI API call: {e}"
             self.logger.error(error_msg)
             return None
 

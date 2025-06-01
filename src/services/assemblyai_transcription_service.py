@@ -1,4 +1,6 @@
 from typing import Optional, Dict, Any, List, Union
+# Import the pydantic patch before importing assemblyai
+from src.patches.pydantic_patch import *
 import assemblyai as aai
 from src.interfaces.transcription_service import TranscriptionService
 from src.interfaces.config_provider import ConfigProvider

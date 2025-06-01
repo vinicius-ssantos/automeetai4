@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from openai import OpenAI
+import openai
 from src.interfaces.text_generation_service import TextGenerationService
 from src.interfaces.config_provider import ConfigProvider
 from src.utils.rate_limiter import RateLimiterRegistry
@@ -42,8 +42,12 @@ class OpenAITextGenerationService(TextGenerationService):
         # Validate API key
         self._validate_api_key(api_key)
 
-        # Initialize OpenAI client
-        self.client = OpenAI(api_key=api_key) if api_key else None
+        # Set OpenAI API key
+        if api_key:
+            openai.api_key = api_key
+            self.client = True  # Just a flag to indicate API key is set
+        else:
+            self.client = None
 
         # Get model from config provider or default
         self.model = None
@@ -110,7 +114,7 @@ class OpenAITextGenerationService(TextGenerationService):
             rate_limiter.consume(wait=True)
 
             # Generate response
-            response = self.client.chat.completions.create(
+            response = openai.ChatCompletion.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -120,7 +124,7 @@ class OpenAITextGenerationService(TextGenerationService):
             )
 
             # Extract and return the generated text
-            generated_text = response.choices[0].message.content.strip()
+            generated_text = response['choices'][0]['message']['content'].strip()
             return generated_text
 
         except ValueError as e:

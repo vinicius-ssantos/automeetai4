@@ -2,7 +2,7 @@ import os
 import tempfile
 import time
 from typing import Optional, List, Callable, Dict, Any
-from moviepy import AudioFileClip
+from moviepy.audio.io.AudioFileClip import AudioFileClip
 from moviepy.audio.AudioClip import AudioClip
 from src.interfaces.audio_converter import AudioConverter
 from src.interfaces.config_provider import ConfigProvider
