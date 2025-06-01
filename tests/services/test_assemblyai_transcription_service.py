@@ -227,6 +227,32 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         # Verificar se o resultado é None (falha)
         self.assertIsNone(result)
 
+    @patch('src.services.assemblyai_transcription_service.validate_file_path')
+    @patch('src.services.assemblyai_transcription_service.RateLimiterRegistry')
+    @patch('src.services.assemblyai_transcription_service.Transcriber')
+    def test_default_config_no_validation_error(self, mock_transcriber, mock_rate_limiter_registry, mock_validate):
+        """Testa que o DEFAULT_CONFIG não causa ValidationError."""
+        # Configurar mocks
+        mock_rate_limiter = Mock()
+        mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
+
+        mock_transcriber_instance = Mock()
+        mock_transcriber.return_value = mock_transcriber_instance
+
+        mock_transcript = Mock()
+        mock_transcript.text = "Test transcript"
+        mock_transcriber_instance.transcribe.return_value = mock_transcript
+
+        # Chamar o método transcribe sem fornecer config (deve usar DEFAULT_CONFIG)
+        result = self.service.transcribe(
+            audio_file=self.audio_file
+        )
+
+        # Verificar se o transcribe foi chamado com o DEFAULT_CONFIG
+        mock_transcriber_instance.transcribe.assert_called_once()
+        call_args = mock_transcriber_instance.transcribe.call_args
+        self.assertEqual(call_args[1]['config'], self.service.DEFAULT_CONFIG)
+
 
 if __name__ == '__main__':
     unittest.main()
