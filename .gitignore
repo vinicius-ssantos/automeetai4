@@ -77,6 +77,9 @@ dist/
 ##############################
 .DS_Store
 Thumbs.db
+# Cache files
+cache/
+*.pickle
 
 # Streamlit secrets
 /.streamlit/secrets.toml
