@@ -2,6 +2,8 @@ from typing import Optional, Dict, Any, List, Union
 # Import the pydantic patch before importing assemblyai
 from src.patches.pydantic_patch import *
 import assemblyai as aai
+from assemblyai import TranscriptionConfig, Transcriber
+
 from src.interfaces.transcription_service import TranscriptionService
 from src.interfaces.config_provider import ConfigProvider
 from src.utils.file_utils import validate_file_path
@@ -29,10 +31,50 @@ class AssemblyAITranscriptionService(TranscriptionService):
     Implementation of TranscriptionService using AssemblyAI.
     Following the Single Responsibility Principle, this class is only responsible
     for transcribing audio files.
+
+    Note: AssemblyAI versions >= 0.22 require all fields to be present in the TranscriptionConfig.
     """
 
     # Initialize logger for this class
     logger = get_logger(__name__)
+
+    # Default configuration for AssemblyAI transcription
+    # This is required for AssemblyAI versions >= 0.22 which require all fields to be present
+    DEFAULT_CONFIG = TranscriptionConfig(
+        language_code=DEFAULT_LANGUAGE_CODE,
+        punctuate=True,
+        format_text=True,
+        dual_channel=False,
+        webhook_url=None,
+        webhook_auth_header_name=None,
+        webhook_auth_header_value=None,
+        audio_start_from=None,
+        audio_end_at=None,
+        word_boost=[],
+        boost_param=None,
+        filter_profanity=False,
+        redact_pii=False,
+        redact_pii_audio=False,
+        redact_pii_policies=None,
+        redact_pii_sub=None,
+        speaker_labels=DEFAULT_SPEAKER_LABELS,
+        speakers_expected=DEFAULT_SPEAKERS_EXPECTED,
+        content_safety=False,
+        content_safety_confidence=None,
+        iab_categories=False,
+        custom_spelling=None,
+        disfluencies=False,
+        sentiment_analysis=False,
+        auto_chapters=False,
+        entity_detection=False,
+        summarization=False,
+        summary_model=None,
+        summary_type=None,
+        auto_highlights=False,
+        language_detection=True,
+        speech_threshold=None,
+        speech_model=None,
+    )
 
     def __init__(self, config_provider: Optional[ConfigProvider] = None):
         """
@@ -76,8 +118,12 @@ class AssemblyAITranscriptionService(TranscriptionService):
         if len(api_key.strip()) < 10:  # Basic validation for key length
             raise ValueError("AssemblyAI API key appears to be invalid. Please check your API key.")
 
-    def transcribe(self, audio_file: str, config: Optional[Dict[str, Any]] = None,
-                 allowed_audio_extensions: Optional[List[str]] = None) -> Union[TranscriptionResult, None]:
+    def transcribe(  # type: ignore[override]
+        self,
+        audio_file: str,
+        config: Optional[Dict[str, Any]] = None,
+        allowed_audio_extensions: Optional[List[str]] = None,
+    ) -> Optional[TranscriptionResult]:
         """
         Transcribe an audio file to text using AssemblyAI.
 
@@ -103,64 +149,8 @@ class AssemblyAITranscriptionService(TranscriptionService):
             # Validate the audio file path
             validate_file_path(audio_file, allowed_extensions=allowed_audio_extensions)
 
-            # Set default configuration
-            transcription_config = {
-                "speaker_labels": DEFAULT_SPEAKER_LABELS,
-                "speakers_expected": DEFAULT_SPEAKERS_EXPECTED,
-                "language_code": DEFAULT_LANGUAGE_CODE
-            }
-
-            # Override with provided config if any
-            if config:
-                transcription_config.update(config)
-
-            # Create AssemblyAI config object with all required parameters
-            # Instead of creating the config object directly, use a dictionary
-            # In newer versions of AssemblyAI, all fields must be present in the config
-            # and we need to use the raw config directly without creating a TranscriptionConfig object
-
-            # First, create a base config with default values for all required fields
-            config_dict = {
-                "speaker_labels": transcription_config["speaker_labels"],
-                "speakers_expected": transcription_config["speakers_expected"],
-                "language_code": transcription_config["language_code"],
-                "punctuate": True,
-                "format_text": True,
-                "dual_channel": False,
-                "webhook_url": None,
-                "webhook_auth_header_name": None,
-                "webhook_auth_header_value": None,
-                "audio_start_from": None,
-                "audio_end_at": None,
-                "word_boost": [],
-                "boost_param": None,
-                "filter_profanity": False,
-                "redact_pii": False,
-                "redact_pii_audio": False,
-                "redact_pii_policies": [],
-                "redact_pii_sub": None,
-                "custom_spelling": [],
-                "disfluencies": False,
-                "summarization": False,
-                "summary_model": None,
-                "summary_type": None,
-                "language_detection": False
-            }
-
-            # Then update with any values from the provided config
-            if config:
-                for key, value in transcription_config.items():
-                    if key in config_dict:
-                        config_dict[key] = value
-
-            # Create the config object
-            try:
-                # Try to create a TranscriptionConfig object
-                aai_config = aai.TranscriptionConfig(**config_dict)
-            except Exception as e:
-                self.logger.error(f"Failed to create TranscriptionConfig: {e}")
-                # Fall back to using the raw dictionary directly with the transcriber
-                aai_config = None
+            # Use DEFAULT_CONFIG if no config is provided, otherwise create a new TranscriptionConfig
+            cfg = self.DEFAULT_CONFIG if config is None else TranscriptionConfig(**config)
 
             # Get rate limiter for AssemblyAI
             rate_limiter = RateLimiterRegistry().get_limiter(
@@ -174,19 +164,8 @@ class AssemblyAITranscriptionService(TranscriptionService):
             rate_limiter.consume(wait=True)
 
             # Create transcriber and transcribe
-            transcriber = aai.Transcriber()
-            if aai_config is not None:
-                # Use the TranscriptionConfig object if it was created successfully
-                transcript = transcriber.transcribe(
-                    audio_file,
-                    config=aai_config
-                )
-            else:
-                # Fall back to using the raw dictionary directly
-                transcript = transcriber.transcribe(
-                    audio_file,
-                    **config_dict
-                )
+            transcriber = Transcriber()
+            transcript = transcriber.transcribe(audio_file, config=cfg)
 
         except FileNotFoundError:
             error_msg = f"The audio file '{audio_file}' was not found."
