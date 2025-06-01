@@ -2,13 +2,19 @@ from typing import Optional, Dict, Any, List, Union, Callable
 import time
 import threading
 import queue
-import pyaudio
 import websocket
 import json
 import base64
 import os
 import wave
 import math
+
+# Try to import pyaudio, but make it optional
+try:
+    import pyaudio
+    PYAUDIO_AVAILABLE = True
+except ImportError:
+    PYAUDIO_AVAILABLE = False
 
 from src.interfaces.streaming_transcription_service import StreamingTranscriptionService
 from src.interfaces.config_provider import ConfigProvider
@@ -39,7 +45,7 @@ class AssemblyAIStreamingTranscriptionService(StreamingTranscriptionService):
     RATE = 16000
     CHANNELS = 1
     CHUNK = 1024
-    FORMAT = pyaudio.paInt16
+    FORMAT = pyaudio.paInt16 if PYAUDIO_AVAILABLE else 8  # 8 is the value for paInt16
 
     def __init__(self, config_provider: Optional[ConfigProvider] = None):
         """
@@ -213,13 +219,14 @@ class AssemblyAIStreamingTranscriptionService(StreamingTranscriptionService):
             if self.processing_thread and self.processing_thread.is_alive():
                 self.processing_thread.join(timeout=2)
 
-            # Fecha o stream de áudio, se estiver aberto
-            if self.stream:
-                self.stream.stop_stream()
-                self.stream.close()
+            # Fecha o stream de áudio, se estiver aberto e se pyaudio está disponível
+            if PYAUDIO_AVAILABLE:
+                if self.stream:
+                    self.stream.stop_stream()
+                    self.stream.close()
 
-            if self.pyaudio_instance:
-                self.pyaudio_instance.terminate()
+                if self.pyaudio_instance:
+                    self.pyaudio_instance.terminate()
 
             # Converte a sessão em um TranscriptionResult
             return self.session.to_transcription_result()
@@ -253,6 +260,11 @@ class AssemblyAIStreamingTranscriptionService(StreamingTranscriptionService):
             Optional[TranscriptionResult]: O resultado completo da transcrição, ou None se falhou
         """
         try:
+            # Check if pyaudio is available
+            if not PYAUDIO_AVAILABLE:
+                self.logger.error("PyAudio is not available. Cannot capture audio from microphone.")
+                return None
+
             # Inicia a sessão de streaming
             if not self.start_streaming(config):
                 self.logger.error("Falha ao iniciar a sessão de streaming.")
