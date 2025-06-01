@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 import os
 
-from src.services.openai_text_generation_service import OpenAITextGenerationService
+from src.services.openai_text_generation_service import OpenAITextGenerationService, USING_OPENAI_V1
 from src.interfaces.config_provider import ConfigProvider
 
 
@@ -30,13 +30,29 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         self.mock_validate_api_key = patcher.start()
         self.addCleanup(patcher.stop)
 
-        # Patch para o módulo openai
-        patcher_openai = patch('src.services.openai_text_generation_service.openai')
-        self.mock_openai = patcher_openai.start()
-        self.addCleanup(patcher_openai.stop)
+        # Setup mocks based on OpenAI version
+        if USING_OPENAI_V1:
+            # For OpenAI v1.0.0+
+            patcher_openai = patch('src.services.openai_text_generation_service.OpenAI')
+            self.mock_openai_class = patcher_openai.start()
+            self.addCleanup(patcher_openai.stop)
 
-        # Configurar o mock do módulo openai
-        self.mock_openai.api_key = None
+            # Criar um mock para o cliente OpenAI
+            self.mock_openai_client = MagicMock()
+            self.mock_openai_class.return_value = self.mock_openai_client
+
+            # Configurar o mock do cliente OpenAI
+            self.mock_chat_completions = MagicMock()
+            self.mock_openai_client.chat.completions = self.mock_chat_completions
+        else:
+            # For older versions of OpenAI
+            patcher_openai = patch('src.services.openai_text_generation_service.openai')
+            self.mock_openai_module = patcher_openai.start()
+            self.addCleanup(patcher_openai.stop)
+
+            # Configurar o mock do módulo OpenAI
+            self.mock_chat_completion = MagicMock()
+            self.mock_openai_module.ChatCompletion = self.mock_chat_completion
 
         # Criar o serviço com o mock do ConfigProvider
         self.service = OpenAITextGenerationService(self.config_provider)
@@ -48,18 +64,28 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
-        # Configurar resposta do OpenAI
-        mock_response = {
-            'choices': [
-                {
-                    'message': {
-                        'content': "Generated text response"
-                    }
-                }
-            ]
-        }
+        if USING_OPENAI_V1:
+            # For OpenAI v1.0.0+
+            # Configurar resposta do OpenAI
+            mock_choice = MagicMock()
+            mock_choice.message.content = "Generated text response"
 
-        self.mock_openai.ChatCompletion.create.return_value = mock_response
+            mock_response = MagicMock()
+            mock_response.choices = [mock_choice]
+
+            self.mock_chat_completions.create.return_value = mock_response
+        else:
+            # For older versions of OpenAI
+            mock_response = {
+                'choices': [
+                    {
+                        'message': {
+                            'content': "Generated text response"
+                        }
+                    }
+                ]
+            }
+            self.mock_chat_completion.create.return_value = mock_response
 
         # Chamar o método generate
         result = self.service.generate(
@@ -72,14 +98,20 @@ class TestOpenAITextGenerationService(unittest.TestCase):
 
         # Verificar se os métodos foram chamados corretamente
         mock_rate_limiter.consume.assert_called_once_with(wait=True)
-        self.mock_openai.ChatCompletion.create.assert_called_once_with(
-            model="gpt-3.5-turbo",
-            messages=[
+
+        expected_args = {
+            'model': "gpt-3.5-turbo",
+            'messages': [
                 {"role": "system", "content": "System prompt for testing"},
                 {"role": "user", "content": "User prompt for testing"}
             ],
-            temperature=0.7
-        )
+            'temperature': 0.7
+        }
+
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.assert_called_once_with(**expected_args)
+        else:
+            self.mock_chat_completion.create.assert_called_once_with(**expected_args)
 
     @patch('src.services.openai_text_generation_service.RateLimiterRegistry')
     def test_generate_with_custom_options(self, mock_rate_limiter_registry):
@@ -88,18 +120,28 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
-        # Configurar resposta do OpenAI
-        mock_response = {
-            'choices': [
-                {
-                    'message': {
-                        'content': "Generated text response"
-                    }
-                }
-            ]
-        }
+        if USING_OPENAI_V1:
+            # For OpenAI v1.0.0+
+            # Configurar resposta do OpenAI
+            mock_choice = MagicMock()
+            mock_choice.message.content = "Generated text response"
 
-        self.mock_openai.ChatCompletion.create.return_value = mock_response
+            mock_response = MagicMock()
+            mock_response.choices = [mock_choice]
+
+            self.mock_chat_completions.create.return_value = mock_response
+        else:
+            # For older versions of OpenAI
+            mock_response = {
+                'choices': [
+                    {
+                        'message': {
+                            'content': "Generated text response"
+                        }
+                    }
+                ]
+            }
+            self.mock_chat_completion.create.return_value = mock_response
 
         # Chamar o método generate com opções personalizadas
         result = self.service.generate(
@@ -112,14 +154,19 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         self.assertEqual(result, "Generated text response")
 
         # Verificar se os métodos foram chamados com as opções personalizadas
-        self.mock_openai.ChatCompletion.create.assert_called_once_with(
-            model="gpt-3.5-turbo",
-            messages=[
+        expected_args = {
+            'model': "gpt-3.5-turbo",
+            'messages': [
                 {"role": "system", "content": "System prompt for testing"},
                 {"role": "user", "content": "User prompt for testing"}
             ],
-            temperature=0.3
-        )
+            'temperature': 0.3
+        }
+
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.assert_called_once_with(**expected_args)
+        else:
+            self.mock_chat_completion.create.assert_called_once_with(**expected_args)
 
     def test_generate_client_not_initialized(self):
         """Testa o comportamento quando o cliente OpenAI não está inicializado."""
@@ -143,7 +190,10 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
         # Configurar o cliente para lançar ValueError
-        self.mock_openai.ChatCompletion.create.side_effect = ValueError("Invalid input")
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.side_effect = ValueError("Invalid input")
+        else:
+            self.mock_chat_completion.create.side_effect = ValueError("Invalid input")
 
         # Chamar o método generate
         result = self.service.generate(
@@ -162,7 +212,10 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
         # Configurar o cliente para lançar ConnectionError
-        self.mock_openai.ChatCompletion.create.side_effect = ConnectionError("Network error")
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.side_effect = ConnectionError("Network error")
+        else:
+            self.mock_chat_completion.create.side_effect = ConnectionError("Network error")
 
         # Chamar o método generate
         result = self.service.generate(
@@ -181,7 +234,10 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
         # Configurar o cliente para lançar TimeoutError
-        self.mock_openai.ChatCompletion.create.side_effect = TimeoutError("Request timed out")
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.side_effect = TimeoutError("Request timed out")
+        else:
+            self.mock_chat_completion.create.side_effect = TimeoutError("Request timed out")
 
         # Chamar o método generate
         result = self.service.generate(
@@ -200,7 +256,10 @@ class TestOpenAITextGenerationService(unittest.TestCase):
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
         # Configurar o cliente para lançar Exception
-        self.mock_openai.ChatCompletion.create.side_effect = Exception("General error")
+        if USING_OPENAI_V1:
+            self.mock_chat_completions.create.side_effect = Exception("General error")
+        else:
+            self.mock_chat_completion.create.side_effect = Exception("General error")
 
         # Chamar o método generate
         result = self.service.generate(

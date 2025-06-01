@@ -4,12 +4,36 @@ import re
 import tempfile
 import shutil
 import contextlib
-from typing import Optional, List, Iterator, ContextManager
+from typing import Optional, List, Iterator, ContextManager, Pattern
 from pathlib import Path
 from src.utils.logging import get_logger
 
 # Initialize logger for this module
 logger = get_logger(__name__)
+
+# Compile suspicious patterns once for better performance
+# These patterns match the ones in the test_file_utils_properties.py test
+SUSPICIOUS_PATTERNS = [
+    # Path traversal patterns
+    (r'(^|/|\\)\.\.(/|\\|$)', re.compile(r'(^|/|\\)\.\.(/|\\|$)')),  # Parent directory references (must be a path component)
+    (r'^\.\.', re.compile(r'^\.\.(?!\.)')),  # Two dots at the start of the path not followed by another dot
+    (r'(/|\\)\.\.(?!\.)', re.compile(r'(/|\\)\.\.(?!\.)')),  # Two dots after a path separator not followed by another dot
+
+    # Simple string patterns that match the test's suspicious_patterns list
+    (r'\.\.', re.compile(r'\.\.')),          # Two dots anywhere (for test compatibility)
+    (r'\\\\', re.compile(r'\\\\')),          # Double backslashes
+    (r'//', re.compile(r'//')),            # Double forward slashes
+    (r'~', re.compile(r'~')),             # Home directory references
+    (r'%00', re.compile(r'%00')),           # Null byte injection
+    (r'\$\{', re.compile(r'\$\{')),          # Shell variable injection
+    (r'<', re.compile(r'<')),             # Shell redirection
+    (r'>', re.compile(r'>')),             # Shell redirection
+    (r'\|', re.compile(r'\|')),            # Shell pipe
+    (r';', re.compile(r';')),             # Command separator
+    (r'&', re.compile(r'&')),             # Command chaining
+    (r'\$\(', re.compile(r'\$\(')),          # Command substitution
+    (r'`', re.compile(r'`'))              # Command substitution
+]
 
 
 def generate_unique_filename(extension: str, prefix: Optional[str] = None, directory: Optional[str] = None) -> str:
@@ -132,6 +156,9 @@ def validate_file_path(file_path: str, allowed_directories: Optional[List[str]] 
     """
     Validate a file path to prevent path traversal attacks.
 
+    This function uses pre-compiled regex patterns for performance optimization,
+    especially when handling complex paths with Unicode characters.
+
     Args:
         file_path: The file path to validate
         allowed_directories: Optional list of allowed directories
@@ -156,23 +183,9 @@ def validate_file_path(file_path: str, allowed_directories: Optional[List[str]] 
     except (ValueError, OSError):
         raise ValueError(f"Invalid file path: {file_path}")
 
-    # Check if the path contains suspicious patterns
-    suspicious_patterns = [
-        r'\.\.',          # Parent directory references
-        r'\\\\',          # Double backslashes
-        r'//',            # Double forward slashes
-        r'~',             # Home directory references
-        r'%00',           # Null byte injection
-        r'\$\{',          # Shell variable injection
-        r'<|>|\|',        # Shell redirection/pipe
-        r';',             # Command separator
-        r'&',             # Command chaining
-        r'\$\(',          # Command substitution
-        r'`'              # Command substitution
-    ]
-
-    for pattern in suspicious_patterns:
-        if re.search(pattern, file_path):
+    # Check if the path contains suspicious patterns using pre-compiled patterns for better performance
+    for pattern_str, compiled_pattern in SUSPICIOUS_PATTERNS:
+        if compiled_pattern.search(file_path):
             raise ValueError(f"File path contains suspicious pattern: {file_path}")
 
     # Check if the file is in an allowed directory

@@ -113,12 +113,21 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         # Verificar se o resultado é o esperado
         self.assertEqual(result, mock_result)
 
-        # Verificar se o TranscriptionConfig foi criado com os parâmetros corretos
-        mock_aai.TranscriptionConfig.assert_called_once_with(
-            speaker_labels=True,
-            speakers_expected=3,
-            language_code="pt"
-        )
+        # Verificar se o TranscriptionConfig foi chamado
+        self.assertTrue(mock_aai.TranscriptionConfig.called)
+
+        # Verificar se os parâmetros principais foram passados corretamente
+        # Agora estamos passando um dicionário filtrado para o TranscriptionConfig
+        call_args = mock_aai.TranscriptionConfig.call_args
+        # Verificar se foi chamado com **kwargs (um dicionário)
+        self.assertEqual(len(call_args[0]), 0)  # Sem argumentos posicionais
+        self.assertTrue(len(call_args[1]) > 0)  # Com argumentos nomeados
+
+        # Verificar os parâmetros principais
+        call_kwargs = call_args[1]
+        self.assertEqual(call_kwargs["speaker_labels"], True)
+        self.assertEqual(call_kwargs["speakers_expected"], 3)
+        self.assertEqual(call_kwargs["language_code"], "pt")
 
         # Verificar se o convert foi chamado com os parâmetros corretos
         mock_convert.assert_called_once_with(mock_transcript, self.audio_file)

@@ -1,7 +1,6 @@
 from typing import Optional, Dict, Any, List, Union
 import os
-from openai import OpenAI
-from openai.types.audio import Transcription
+import openai
 from src.interfaces.transcription_service import TranscriptionService
 from src.interfaces.config_provider import ConfigProvider
 from src.utils.file_utils import validate_file_path
@@ -23,6 +22,14 @@ from src.config.default_config import (
     OPENAI_RATE_LIMIT_PER,
     OPENAI_RATE_LIMIT_BURST
 )
+
+# Check if we're using OpenAI v1.0.0+ or an older version
+try:
+    from openai import OpenAI
+    from openai.types.audio import Transcription
+    USING_OPENAI_V1 = True
+except ImportError:
+    USING_OPENAI_V1 = False
 
 
 class WhisperTranscriptionService(TranscriptionService):
@@ -54,8 +61,17 @@ class WhisperTranscriptionService(TranscriptionService):
         # Valida a chave de API
         self._validate_api_key(api_key)
 
-        # Initialize OpenAI client
-        self.client = OpenAI(api_key=api_key) if api_key else None
+        # Initialize OpenAI client based on version
+        if api_key:
+            if USING_OPENAI_V1:
+                # For OpenAI v1.0.0+
+                self.client = OpenAI(api_key=api_key)
+            else:
+                # For older versions of OpenAI
+                openai.api_key = api_key
+                self.client = openai
+        else:
+            self.client = None
 
     def _validate_api_key(self, api_key: Optional[str]) -> None:
         """
@@ -68,7 +84,8 @@ class WhisperTranscriptionService(TranscriptionService):
             ValueError: Se a chave de API for inválida
         """
         if not api_key:
-            raise ValueError("OpenAI API key is required. Please set the AUTOMEETAI_OPENAI_API_KEY environment variable or provide it directly.")
+            self.logger.warning("OpenAI API key is not provided. Service will be initialized but transcription will not work.")
+            return
 
         if not isinstance(api_key, str):
             raise ValueError("OpenAI API key must be a string.")
@@ -130,13 +147,25 @@ class WhisperTranscriptionService(TranscriptionService):
             with open(audio_file, "rb") as audio:
                 # Chama a API Whisper
                 self.logger.info(f"Transcrevendo arquivo de áudio: {audio_file}")
-                response = self.client.audio.transcriptions.create(
-                    file=audio,
-                    model=transcription_config["model"],
-                    language=transcription_config["language"],
-                    temperature=transcription_config["temperature"],
-                    response_format=transcription_config["response_format"]
-                )
+
+                if USING_OPENAI_V1:
+                    # For OpenAI v1.0.0+
+                    response = self.client.audio.transcriptions.create(
+                        file=audio,
+                        model=transcription_config["model"],
+                        language=transcription_config["language"],
+                        temperature=transcription_config["temperature"],
+                        response_format=transcription_config["response_format"]
+                    )
+                else:
+                    # For older versions of OpenAI
+                    response = self.client.Transcription.create(
+                        file=audio,
+                        model=transcription_config["model"],
+                        language=transcription_config["language"],
+                        temperature=transcription_config["temperature"],
+                        response_format=transcription_config["response_format"]
+                    )
 
             # Converte para TranscriptionResult
             return WhisperAdapter.convert(response, audio_file)

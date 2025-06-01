@@ -14,7 +14,7 @@ preferences = {
 }
 
 # Save the preferences to a file
-with open("test_preferences.json", "w", encoding="utf-8") as f:
+with open("../test_preferences.json", "w", encoding="utf-8") as f:
     json.dump(preferences, f, indent=4)
 
 print("Created test preferences file with the following settings:")
@@ -23,7 +23,7 @@ for key, value in preferences.items():
 
 # Create the configuration providers
 env_provider = EnvConfigProvider()
-user_provider = UserPreferencesProvider("test_preferences.json")
+user_provider = UserPreferencesProvider("../test_preferences.json")
 composite_provider = CompositeConfigProvider()
 
 # Add providers to the composite provider (env first for higher precedence)
@@ -58,5 +58,5 @@ else:
     print(f"\n✗ Environment variable precedence failed: Expected {test_value_env}, got {actual_value}")
 
 # Clean up
-os.remove("test_preferences.json")
+os.remove("../test_preferences.json")
 print("\nTest completed and preferences file removed.")

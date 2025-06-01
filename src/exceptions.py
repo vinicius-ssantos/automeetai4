@@ -36,6 +36,15 @@ class AutoMeetAIError(Exception):
         """
         return self.user_friendly_message if self.user_friendly_message else str(self)
 
+    def get_user_friendly_message(self):
+        """
+        Alias para get_user_message() para compatibilidade.
+
+        Returns:
+            str: Mensagem amigável para o usuário
+        """
+        return self.get_user_message()
+
 
 class ConfigError(AutoMeetAIError):
     """

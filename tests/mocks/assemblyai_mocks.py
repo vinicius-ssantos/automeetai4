@@ -133,7 +133,7 @@ class MockAssemblyAITranscriptionConfig:
     Esta classe simula o objeto TranscriptionConfig da AssemblyAI.
     """
 
-    def __init__(self, speaker_labels: bool = False, speakers_expected: int = 2, language_code: str = "en"):
+    def __init__(self, speaker_labels: bool = False, speakers_expected: int = 2, language_code: str = "en", **kwargs):
         """
         Inicializa o mock de configuração de transcrição.
 
@@ -141,10 +141,15 @@ class MockAssemblyAITranscriptionConfig:
             speaker_labels: Indica se a detecção de falantes está ativada
             speakers_expected: O número esperado de falantes
             language_code: O código do idioma para a transcrição
+            **kwargs: Parâmetros adicionais para a configuração
         """
         self.speaker_labels = speaker_labels
         self.speakers_expected = speakers_expected
         self.language_code = language_code
+
+        # Store all additional parameters
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 
 class MockAssemblyAI:

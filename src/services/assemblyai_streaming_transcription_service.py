@@ -79,7 +79,8 @@ class AssemblyAIStreamingTranscriptionService(StreamingTranscriptionService):
             ValueError: Se a chave de API for inválida
         """
         if not api_key:
-            raise ValueError("AssemblyAI API key is required. Please set the AUTOMEETAI_ASSEMBLYAI_API_KEY environment variable or provide it directly.")
+            self.logger.warning("AssemblyAI API key is not provided. Service will be initialized but streaming will not work.")
+            return
 
         if not isinstance(api_key, str):
             raise ValueError("AssemblyAI API key must be a string.")
@@ -97,6 +98,11 @@ class AssemblyAIStreamingTranscriptionService(StreamingTranscriptionService):
         Returns:
             bool: True se a sessão foi iniciada com sucesso, False caso contrário
         """
+        # Check if API key is set
+        if not self.api_key:
+            self.logger.error("Cannot start streaming: AssemblyAI API key is not set. Please set the AUTOMEETAI_ASSEMBLYAI_API_KEY environment variable or provide it directly.")
+            return False
+
         try:
             # Reinicia a sessão
             self.session = StreamingSession()

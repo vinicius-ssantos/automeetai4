@@ -1,5 +1,10 @@
 import os
+import sys
 import json
+
+# Add the project root directory to the Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from src.factory import AutoMeetAIFactory
 
 # Create a user preferences file with some test settings
@@ -12,7 +17,7 @@ preferences = {
 }
 
 # Save the preferences to a file
-with open("test_preferences.json", "w", encoding="utf-8") as f:
+with open("../test_preferences.json", "w", encoding="utf-8") as f:
     json.dump(preferences, f, indent=4)
 
 print("Created test preferences file with the following settings:")
@@ -23,11 +28,11 @@ for key, value in preferences.items():
 factory = AutoMeetAIFactory()
 app = factory.create(
     use_user_preferences=True,
-    user_preferences_file="test_preferences.json"
+    user_preferences_file="../test_preferences.json"
 )
 
 # Get the config provider from the app
-config_provider = app._config_provider
+config_provider = app.config_provider
 
 # Check if the preferences are being used
 print("\nVerifying user preferences:")
@@ -39,5 +44,5 @@ for key, expected_value in preferences.items():
         print(f"  ✗ {key}: Expected {expected_value}, got {actual_value}")
 
 # Clean up
-os.remove("test_preferences.json")
+os.remove("../test_preferences.json")
 print("\nTest completed and preferences file removed.")

@@ -12,6 +12,13 @@ from src.config.default_config import (
     OPENAI_RATE_LIMIT_BURST
 )
 
+# Check if we're using OpenAI v1.0.0+ or an older version
+try:
+    from openai import OpenAI
+    USING_OPENAI_V1 = True
+except ImportError:
+    USING_OPENAI_V1 = False
+
 
 class OpenAITextGenerationService(TextGenerationService):
     """
@@ -42,10 +49,15 @@ class OpenAITextGenerationService(TextGenerationService):
         # Validate API key
         self._validate_api_key(api_key)
 
-        # Set OpenAI API key
+        # Initialize OpenAI client based on version
         if api_key:
-            openai.api_key = api_key
-            self.client = True  # Just a flag to indicate API key is set
+            if USING_OPENAI_V1:
+                # For OpenAI v1.0.0+
+                self.client = OpenAI(api_key=api_key)
+            else:
+                # For older versions of OpenAI
+                openai.api_key = api_key
+                self.client = openai
         else:
             self.client = None
 
@@ -67,7 +79,8 @@ class OpenAITextGenerationService(TextGenerationService):
             ValueError: If the API key is invalid
         """
         if not api_key:
-            raise ValueError("OpenAI API key is required. Please set the AUTOMEETAI_OPENAI_API_KEY environment variable or provide it directly.")
+            self.logger.warning("OpenAI API key is not provided. Service will be initialized but text generation will not work.")
+            return
 
         if not isinstance(api_key, str):
             raise ValueError("OpenAI API key must be a string.")
@@ -113,18 +126,31 @@ class OpenAITextGenerationService(TextGenerationService):
             # Wait for a token to become available (rate limiting)
             rate_limiter.consume(wait=True)
 
-            # Generate response
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ],
-                temperature=generation_options["temperature"]
-            )
-
-            # Extract and return the generated text
-            generated_text = response['choices'][0]['message']['content'].strip()
+            # Generate response based on OpenAI version
+            if USING_OPENAI_V1:
+                # For OpenAI v1.0.0+
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=generation_options["temperature"]
+                )
+                # Extract and return the generated text
+                generated_text = response.choices[0].message.content.strip()
+            else:
+                # For older versions of OpenAI
+                response = self.client.ChatCompletion.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt}
+                    ],
+                    temperature=generation_options["temperature"]
+                )
+                # Extract and return the generated text
+                generated_text = response['choices'][0]['message']['content'].strip()
             return generated_text
 
         except ValueError as e:

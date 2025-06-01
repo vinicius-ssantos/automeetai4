@@ -76,8 +76,16 @@ dist/
 # Outros
 ##############################
 .DS_Store
-Thumbs.db!/tests/.hypothesis/examples/
-/tests/.hypothesis/unicode_data/
+Thumbs.db
 
+# Streamlit secrets
 /.streamlit/secrets.toml
-/tests/.hypothesis/
+
+# Hypothesis testing cache
+.hypothesis/
+tests/.hypothesis/
+tests/.hypothesis/examples/
+tests/.hypothesis/unicode_data/
+
+# Test preferences file (used for testing only)
+test_preferences.json
