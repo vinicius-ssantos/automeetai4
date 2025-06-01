@@ -1,0 +1,5 @@
+# Development dependencies for AutoMeetAI
+pytest==7.3.1
+pytest-cov==4.1.0
+coverage==7.2.7
+hypothesis==6.82.0
