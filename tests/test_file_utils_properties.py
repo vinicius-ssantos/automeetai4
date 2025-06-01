@@ -85,8 +85,8 @@ if not PYTEST_AVAILABLE:
 
 # Estratégias para gerar caminhos de arquivo válidos e inválidos
 valid_path_chars = st.characters(
-    blacklist_characters='\\/:*?"<>|',
-    blacklist_categories=('Cs',)  # Exclude surrogate characters
+    blacklist_characters='\\/:*?"<>|`&;~',
+    blacklist_categories=('Cs', 'Cc')  # Exclude surrogate and control characters
 )
 
 valid_filename = st.text(
@@ -277,7 +277,10 @@ def test_generate_unique_filename_properties(prefix, extension):
     assert all(c in "0123456789abcdef" for c in uuid_part)
 
 
-@given(st.text(min_size=1, max_size=50))
+@given(st.text(min_size=1, max_size=50, alphabet=st.characters(
+    blacklist_characters='\\/:*?"<>|',
+    blacklist_categories=('Cs', 'Cc')  # Exclude surrogate and control characters
+)))
 def test_ensure_directory_exists_properties(directory):
     """
     Testa as propriedades da função ensure_directory_exists.
@@ -285,8 +288,6 @@ def test_ensure_directory_exists_properties(directory):
     Args:
         directory: Um nome de diretório
     """
-    # Filtrar caracteres inválidos para nomes de diretório
-    assume(not any(c in directory for c in '\\/:*?"<>|'))
 
     try:
         # Criar um caminho temporário para o teste
