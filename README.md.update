@@ -1,0 +1,55 @@
+# AutoMeetAI - Configuração de API Keys
+
+## Configuração de Chaves de API
+
+O AutoMeetAI requer chaves de API para os seguintes serviços:
+
+1. **AssemblyAI** - Para serviços de transcrição de áudio
+2. **OpenAI** - Para serviços de geração de texto e análise
+
+Existem duas maneiras de configurar estas chaves:
+
+### 1. Usando o arquivo user_preferences.json
+
+Este é o método mais simples. Edite o arquivo `user_preferences.json` na raiz do projeto e adicione suas chaves:
+
+```json
+{
+    "assemblyai_api_key": "sua_chave_api_assemblyai",
+    "openai_api_key": "sua_chave_api_openai"
+}
+```
+
+### 2. Usando Streamlit Secrets
+
+Para uma configuração mais segura, você pode usar o sistema de secrets do Streamlit:
+
+1. Crie um diretório `.streamlit` na raiz do projeto (se ainda não existir)
+2. Crie um arquivo `secrets.toml` dentro deste diretório
+3. Adicione suas chaves no seguinte formato:
+
+```toml
+[assemblyai]
+api_key = "sua_chave_api_assemblyai"
+
+[openai]
+api_key = "sua_chave_api_openai"
+```
+
+Alternativamente, você pode colocar este arquivo em `~/.streamlit/secrets.toml` para que seja usado por todos os seus projetos Streamlit.
+
+## Executando a Aplicação
+
+Após configurar suas chaves de API, execute a aplicação com:
+
+```bash
+streamlit run app.py
+```
+
+## Solução de Problemas
+
+Se você encontrar erros relacionados a chaves de API:
+
+1. Verifique se suas chaves estão configuradas corretamente em um dos métodos acima
+2. Verifique se as chaves são válidas tentando usá-las diretamente nas respectivas APIs
+3. Verifique os logs da aplicação para mensagens de erro mais detalhadas
