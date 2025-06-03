@@ -1,5 +1,9 @@
 from typing import Optional, Dict, Any
-import openai
+
+try:
+    import openai
+except ImportError:  # pragma: no cover - handled in initialization
+    openai = None
 from src.interfaces.text_generation_service import TextGenerationService
 from src.interfaces.config_provider import ConfigProvider
 from src.utils.rate_limiter import RateLimiterRegistry
@@ -14,9 +18,12 @@ from src.config.default_config import (
 
 # Check if we're using OpenAI v1.0.0+ or an older version
 try:
-    from openai import OpenAI
-    USING_OPENAI_V1 = True
-except ImportError:
+    if openai:
+        from openai import OpenAI  # type: ignore
+        USING_OPENAI_V1 = True
+    else:
+        USING_OPENAI_V1 = False
+except Exception:  # pragma: no cover - handle unexpected import issues
     USING_OPENAI_V1 = False
 
 
@@ -50,7 +57,7 @@ class OpenAITextGenerationService(TextGenerationService):
         self._validate_api_key(api_key)
 
         # Initialize OpenAI client based on version
-        if api_key:
+        if api_key and openai:
             if USING_OPENAI_V1:
                 # For OpenAI v1.0.0+
                 self.client = OpenAI(api_key=api_key)
@@ -59,6 +66,10 @@ class OpenAITextGenerationService(TextGenerationService):
                 openai.api_key = api_key
                 self.client = openai
         else:
+            if api_key and not openai:
+                self.logger.warning(
+                    "OpenAI library is not installed. Text generation will be disabled."
+                )
             self.client = None
 
         # Get model from config provider or default
