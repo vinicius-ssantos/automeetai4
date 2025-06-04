@@ -4,6 +4,9 @@ import unittest
 from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
+# Configure API authentication for tests
+os.environ["AUTOMEETAI_API_AUTH_TOKEN"] = "testtoken123"
+
 # Allow importing the project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -44,6 +47,7 @@ class TestAPI(unittest.TestCase):
                 "speakers_expected": "3",
                 "language_code": "en",
             },
+            headers={"X-API-Key": "testtoken123"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["text"], "hello")
@@ -60,10 +64,38 @@ class TestAPI(unittest.TestCase):
         response = self.client.post(
             "/analysis",
             json={"text": "hello", "system_prompt": "sys", "user_prompt": "user {transcription}"},
+            headers={"X-API-Key": "testtoken123"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"analysis": "summary"})
         self.mock_app.analyze_transcription.assert_called_once()
+
+    def test_missing_api_key(self):
+        """Requests without the API key should fail."""
+        response = self.client.post("/analysis", json={"text": "hello"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_graphql_health(self):
+        """Query health over GraphQL."""
+        response = self.client.post(
+            "/graphql",
+            json={"query": "{ health }"},
+            headers={"X-API-Key": "testtoken123"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["health"], "ok")
+
+    def test_graphql_analyze(self):
+        """Mutation analyze over GraphQL."""
+        self.mock_app.analyze_transcription.return_value = "summary"
+        mutation = "mutation { analyze(text: \"hello\") }"
+        response = self.client.post(
+            "/graphql",
+            json={"query": mutation},
+            headers={"X-API-Key": "testtoken123"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["data"]["analyze"], "summary")
 
 
 if __name__ == "__main__":
