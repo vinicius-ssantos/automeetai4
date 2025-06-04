@@ -687,7 +687,9 @@ vídeo remotamente e solicitar análises de transcrições.
 | Método | Caminho            | Descrição                                   |
 |-------:|--------------------|---------------------------------------------|
 | `GET`  | `/health`          | Verifica se o serviço está no ar            |
-| `POST` | `/transcriptions`  | Envia um vídeo e retorna a transcrição      |
+
+| `POST` | `/transcriptions`  | Envia um vídeo e retorna a transcrição. Aceita parâmetros `speaker_labels`, `speakers_expected` e `language_code`. |
+
 | `POST` | `/analysis`        | Analisa um texto de transcrição e retorna o resultado |
 
 ### Exemplo de uso
@@ -695,7 +697,9 @@ vídeo remotamente e solicitar análises de transcrições.
 ```bash
 curl http://localhost:8000/health
 
-curl -X POST http://localhost:8000/transcriptions \
+
+curl -X POST "http://localhost:8000/transcriptions?speaker_labels=false&speakers_expected=3&language_code=en" \
+
      -F "file=@reuniao.mp4" -H "accept: application/json"
 
 curl -X POST http://localhost:8000/analysis \

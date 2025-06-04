@@ -111,6 +111,14 @@ endpoints:
 - `POST /transcriptions` – upload a video file and get its transcription
 - `POST /analysis` – analyze a transcription text
 
+
+The `/transcriptions` endpoint accepts optional query parameters to control the
+transcription process:
+
+- `speaker_labels` – whether to enable speaker diarization (default `true`)
+- `speakers_expected` – expected number of speakers (default `2`)
+- `language_code` – ISO code of the audio language (default `pt`)
+
 ## Extending the Application
 
 The modular architecture makes it easy to extend the application:
