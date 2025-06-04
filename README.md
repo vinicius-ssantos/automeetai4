@@ -98,7 +98,11 @@ analysis = app.analyze_transcription(
 ### REST API
 
 You can also interact with AutoMeetAI through a simple REST API built with
-FastAPI. After installing the dependencies, run:
+FastAPI. The API requires an authentication token provided via the
+`AUTOMEETAI_API_AUTH_TOKEN` environment variable. Clients must send this token in
+the `X-API-Key` header when calling protected endpoints.
+
+After installing the dependencies, run:
 
 ```bash
 uvicorn api:app --reload
@@ -110,6 +114,7 @@ endpoints:
 - `GET /health` – basic health check
 - `POST /transcriptions` – upload a video file and get its transcription
 - `POST /analysis` – analyze a transcription text
+- `POST /graphql` – GraphQL endpoint with a playground
 
 
 The `/transcriptions` endpoint accepts optional query parameters to control the

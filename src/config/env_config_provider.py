@@ -28,6 +28,7 @@ class EnvConfigProvider(ConfigProvider):
             # API keys
             "assemblyai_api_key": lambda key: ConfigValidator.validate_api_key(key, "AssemblyAI"),
             "openai_api_key": lambda key: ConfigValidator.validate_api_key(key, "OpenAI"),
+            "api_auth_token": lambda key: ConfigValidator.validate_api_key(key, "API Auth"),
 
             # Rate limits
             "assemblyai_rate_limit": lambda rate: ConfigValidator.validate_rate_limit(rate, "AssemblyAI"),

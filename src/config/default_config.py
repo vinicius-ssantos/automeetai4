@@ -12,6 +12,10 @@ ASSEMBLYAI_API_KEY = None
 OPENAI_API_KEY = None
 OPENAI_MODEL = "gpt-4o-2024-08-06"
 
+# REST API authentication
+# Must be set via environment variable AUTOMEETAI_API_AUTH_TOKEN
+API_AUTH_TOKEN = None
+
 # Whisper API configuration
 # Uses the same API key as OpenAI (AUTOMEETAI_OPENAI_API_KEY)
 WHISPER_MODEL = "whisper-1"
