@@ -165,7 +165,7 @@ class AssemblyAITranscriptionService(TranscriptionService):
 
             # Create transcriber and transcribe
             transcriber = Transcriber()
-            transcript = transcriber.transcribe(audio_file, config=cfg)
+            transcript = transcriber.transcribe(audio_file, **{'config': cfg})
 
         except FileNotFoundError:
             error_msg = f"The audio file '{audio_file}' was not found."

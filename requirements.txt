@@ -1,6 +1,8 @@
 # --- Interface Web ---
-streamlit>=1.25,<1.35   # versões novas mantêm compatibilidade com Pillow <10
-st-annotated-text>=4.0    # componente para destacar falas no Streamlit
+
+streamlit>=1.37.0   # versões mais novas mantêm compatibilidade com Pillow <10
+st-annotated-text==4.0.2    # usado para destacar falas na transcrição
+
 
 # --- Serviços de IA ---
 openai>=1.25.0           # geração de texto
@@ -23,6 +25,7 @@ pyparsing>=3.1
 pytz>=2024.1
 six>=1.16
 smmap>=5.0
+moviepy>=1.0.3
 
 # --- Tratamento de imagens ---
 # Pillow precisa estar <10 por causa da restrição do Streamlit
@@ -31,3 +34,8 @@ pillow>=9.5,<10
 # --- REST API ---
 fastapi>=0.111
 uvicorn>=0.29
+
+python-multipart>=0.0.9     # ← adicionado
+
+# --- Configuração baseada em variáveis ---
+pydantic-settings>=2.2       # ← adicionado
