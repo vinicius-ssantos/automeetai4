@@ -6,6 +6,9 @@ import os
 import tempfile
 from typing import Any, Dict, List
 
+from src.config.env_config_provider import EnvConfigProvider
+from src.config.config_validator import ConfigValidator
+
 from src.factory import AutoMeetAIFactory
 from src.models.transcription_result import TranscriptionResult, Utterance
 from src.exceptions import AutoMeetAIError
@@ -16,8 +19,17 @@ logger = get_logger(__name__)
 
 app = FastAPI(title="AutoMeetAI API")
 
-# API authentication token from environment
-API_AUTH_TOKEN = os.environ.get("AUTOMEETAI_API_AUTH_TOKEN")
+
+# API authentication token from configuration
+_config = EnvConfigProvider()
+API_AUTH_TOKEN = _config.get("api_auth_token")
+if API_AUTH_TOKEN:
+    try:
+        API_AUTH_TOKEN = ConfigValidator.validate_api_key(API_AUTH_TOKEN, "API Auth")
+    except ValueError as exc:
+        logger.error(f"Invalid API authentication token: {exc}")
+        API_AUTH_TOKEN = None
+
 
 
 def require_api_key(x_api_key: str = Header(None)) -> None:
