@@ -111,6 +111,7 @@ endpoints:
 - `POST /transcriptions` – upload a video file and get its transcription
 - `POST /analysis` – analyze a transcription text
 
+
 The `/transcriptions` endpoint accepts optional query parameters to control the
 transcription process:
 
