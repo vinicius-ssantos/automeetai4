@@ -1,6 +1,8 @@
 # --- Interface Web ---
+
 streamlit>=1.37.0   # versões mais novas mantêm compatibilidade com Pillow <10
 st-annotated-text==4.0.2    # usado para destacar falas na transcrição
+
 
 # --- Serviços de IA ---
 openai>=1.25.0           # geração de texto
@@ -9,7 +11,7 @@ assemblyai==0.22.0        # transcrição por API da AssemblyAI (versões >= 0.2
 # --- Comunicação em tempo-real / Streaming ---
 websocket-client>=1.6.2  # WebSocket usado no serviço de streaming
 tornado>=6.4             # já requerido pelo Streamlit, mas declarado explicitamente
-pyaudio==0.2.13          # captura de microfone (opcional; pode ser omitido em ambientes sem áudio)
+# pyaudio==0.2.13          # captura de microfone (opcional; requer dependências de sistema)
 
 # --- Ciência de dados e utilitários ---
 numpy>=1.24
@@ -32,6 +34,7 @@ pillow>=9.5,<10
 # --- REST API ---
 fastapi>=0.111
 uvicorn>=0.29
+
 python-multipart>=0.0.9     # ← adicionado
 
 # --- Configuração baseada em variáveis ---
