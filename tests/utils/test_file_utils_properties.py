@@ -29,6 +29,11 @@ except ImportError:
             return func
         return decorator
 
+    def settings(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
+
     # Create a dummy strategy class that implements common methods
     class DummyStrategy:
         def __init__(self, *args, **kwargs):

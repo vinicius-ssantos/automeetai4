@@ -95,6 +95,29 @@ analysis = app.analyze_transcription(
 )
 ```
 
+### REST API
+
+You can also interact with AutoMeetAI through a simple REST API built with
+FastAPI. After installing the dependencies, run:
+
+```bash
+uvicorn api:app --reload
+```
+
+This will start a server on `http://localhost:8000` exposing the following
+endpoints:
+
+- `GET /health` – basic health check
+- `POST /transcriptions` – upload a video file and get its transcription
+- `POST /analysis` – analyze a transcription text
+
+The `/transcriptions` endpoint accepts optional query parameters to control the
+transcription process:
+
+- `speaker_labels` – whether to enable speaker diarization (default `true`)
+- `speakers_expected` – expected number of speakers (default `2`)
+- `language_code` – ISO code of the audio language (default `pt`)
+
 ## Extending the Application
 
 The modular architecture makes it easy to extend the application:
