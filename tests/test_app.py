@@ -1,7 +1,39 @@
 import os
 import sys
+import types
 import unittest
 from unittest.mock import patch, MagicMock
+
+# Provide a dummy streamlit module when the real package isn't installed.
+try:
+    import streamlit  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - only executed in minimal envs
+    class DummyStreamlit(MagicMock):
+        def __getattr__(self, name):  # type: ignore
+            return MagicMock()
+
+        def columns(self, n, *args, **kwargs):  # type: ignore
+            return tuple(MagicMock() for _ in range(n))
+
+        def file_uploader(self, *args, **kwargs):  # type: ignore
+            return None
+
+        def number_input(self, *args, **kwargs):  # type: ignore
+            return 1
+
+        def selectbox(self, label, options, *args, **kwargs):  # type: ignore
+            return options[0]
+
+    streamlit = DummyStreamlit()
+    sys.modules["streamlit"] = streamlit
+
+# Provide a dummy annotated_text module if missing.
+try:
+    from annotated_text import annotated_text  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - only executed in minimal envs
+    annotated_module = types.ModuleType("annotated_text")
+    annotated_module.annotated_text = MagicMock()
+    sys.modules["annotated_text"] = annotated_module
 
 # Add the parent directory to the path so we can import app
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -61,5 +93,5 @@ class TestApp(unittest.TestCase):
             # This is a simplified test since we can't fully test the Streamlit UI
             self.assertIsNotNone(app.automeetai)
             
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
