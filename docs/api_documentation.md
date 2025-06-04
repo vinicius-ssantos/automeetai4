@@ -708,3 +708,27 @@ curl -X POST http://localhost:8000/analysis \
 ```
 
 Consulte `api.py` para ver a implementação completa da API.
+
+## GraphQL API
+
+Além da API REST, o AutoMeetAI expõe um endpoint GraphQL em `/graphql`.
+Esse endpoint utiliza o cabeçalho `X-API-Key` para autenticação e
+permite consultar o estado do serviço ou executar mutações de análise.
+
+### Exemplo de consulta
+
+```bash
+curl -X POST http://localhost:8000/graphql \
+     -H "Content-Type: application/json" \
+     -H "X-API-Key: SEU_TOKEN" \
+     -d '{"query": "{ health }"}'
+```
+
+### Exemplo de mutação
+
+```bash
+curl -X POST http://localhost:8000/graphql \
+     -H "Content-Type: application/json" \
+     -H "X-API-Key: SEU_TOKEN" \
+     -d '{"query": "mutation { analyze(text: \"Olá mundo\") }"}'
+```

@@ -36,6 +36,8 @@ fastapi>=0.111
 uvicorn>=0.29
 
 python-multipart>=0.0.9     # ← adicionado
+graphene>=3.4               # GraphQL support
+starlette-graphene3>=0.6    # GraphQL integration with FastAPI
 
 # --- Configuração baseada em variáveis ---
 pydantic-settings>=2.2       # ← adicionado

@@ -1,8 +1,13 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header, Request
+from starlette_graphene3 import GraphQLApp, make_playground_handler
+import graphene
 from pydantic import BaseModel
 import os
 import tempfile
 from typing import Any, Dict, List
+
+from src.config.env_config_provider import EnvConfigProvider
+from src.config.config_validator import ConfigValidator
 
 from src.factory import AutoMeetAIFactory
 from src.models.transcription_result import TranscriptionResult, Utterance
@@ -13,6 +18,25 @@ configure_logger()
 logger = get_logger(__name__)
 
 app = FastAPI(title="AutoMeetAI API")
+
+# API authentication token from configuration
+_config = EnvConfigProvider()
+API_AUTH_TOKEN = _config.get("api_auth_token")
+if API_AUTH_TOKEN:
+    try:
+        API_AUTH_TOKEN = ConfigValidator.validate_api_key(API_AUTH_TOKEN, "API Auth")
+    except ValueError as exc:
+        logger.error(f"Invalid API authentication token: {exc}")
+        API_AUTH_TOKEN = None
+
+
+def require_api_key(x_api_key: str = Header(None)) -> None:
+    """Validate the API key provided in the request header."""
+    if not API_AUTH_TOKEN:
+        logger.error("API authentication token is not configured.")
+        raise HTTPException(status_code=500, detail="API authentication not configured")
+    if x_api_key != API_AUTH_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
 # Initialize AutoMeetAI using the factory
 factory = AutoMeetAIFactory()
@@ -41,7 +65,7 @@ def health() -> Dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/transcriptions")
+@app.post("/transcriptions", dependencies=[Depends(require_api_key)])
 async def transcribe(
     file: UploadFile = File(...),
     speaker_labels: bool = True,
@@ -91,7 +115,7 @@ class AnalysisRequest(BaseModel):
     user_prompt: str = "Analise a transcrição a seguir:\n{transcription}"
 
 
-@app.post("/analysis")
+@app.post("/analysis", dependencies=[Depends(require_api_key)])
 def analyze(request: AnalysisRequest) -> Dict[str, Any]:
     """Analyze a transcription text using the AutoMeetAI services."""
     transcription = TranscriptionResult(
@@ -110,3 +134,50 @@ def analyze(request: AnalysisRequest) -> Dict[str, Any]:
         logger.error(f"Error processing analysis: {exc}")
         message = getattr(exc, "user_friendly_message", str(exc))
         raise HTTPException(status_code=400, detail=message) from exc
+
+
+class Query(graphene.ObjectType):
+    """GraphQL query definitions."""
+
+    health = graphene.String()
+
+    def resolve_health(self, info):
+        return "ok"
+
+
+class Mutations(graphene.ObjectType):
+    """GraphQL mutations."""
+
+    analyze = graphene.Field(
+        graphene.String,
+        text=graphene.String(required=True),
+        system_prompt=graphene.String(default_value="Você é um assistente de IA."),
+        user_prompt=graphene.String(default_value="Analise a transcrição a seguir:\n{transcription}"),
+    )
+
+    def resolve_analyze(self, info, text: str, system_prompt: str, user_prompt: str):
+        transcription = TranscriptionResult(utterances=[], text=text, audio_file="input.mp3")
+        try:
+            return automeetai.analyze_transcription(
+                transcription=transcription,
+                system_prompt=system_prompt,
+                user_prompt_template=user_prompt,
+            )
+        except AutoMeetAIError as exc:
+            message = getattr(exc, "user_friendly_message", str(exc))
+            raise Exception(message)
+
+
+schema = graphene.Schema(query=Query, mutation=Mutations)
+graphql_app = GraphQLApp(schema=schema, on_get=make_playground_handler())
+
+
+@app.api_route("/graphql", methods=["GET", "POST"])
+async def graphql_endpoint(request: Request, x_api_key: str = Header(None)):
+    """GraphQL endpoint with API key validation."""
+    require_api_key(x_api_key)
+    if request.method == "GET":
+        response = await graphql_app._get_on_get(request)
+    else:
+        response = await graphql_app._handle_http_request(request)
+    return response

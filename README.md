@@ -98,7 +98,11 @@ analysis = app.analyze_transcription(
 ### REST API
 
 You can also interact with AutoMeetAI through a simple REST API built with
-FastAPI. After installing the dependencies, run:
+FastAPI. The API requires an authentication token provided via the
+`AUTOMEETAI_API_AUTH_TOKEN` environment variable. Clients must send this token in
+the `X-API-Key` header when calling protected endpoints.
+
+After installing the dependencies, run:
 
 ```bash
 uvicorn api:app --reload
@@ -110,6 +114,7 @@ endpoints:
 - `GET /health` – basic health check
 - `POST /transcriptions` – upload a video file and get its transcription
 - `POST /analysis` – analyze a transcription text
+- `POST /graphql` – GraphQL endpoint with a playground
 
 
 The `/transcriptions` endpoint accepts optional query parameters to control the
@@ -118,6 +123,17 @@ transcription process:
 - `speaker_labels` – whether to enable speaker diarization (default `true`)
 - `speakers_expected` – expected number of speakers (default `2`)
 - `language_code` – ISO code of the audio language (default `pt`)
+
+### Docker
+
+You can also run the API inside a Docker container. Build the image and start the server with:
+
+```bash
+docker build -t automeetai .
+docker run -e AUTOMEETAI_API_AUTH_TOKEN=your_token -p 8000:8000 automeetai
+```
+
+This will expose the API on `http://localhost:8000`.
 
 ## Extending the Application
 
