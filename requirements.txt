@@ -28,3 +28,7 @@ moviepy>=1.0.3
 # --- Tratamento de imagens ---
 # Pillow precisa estar <10 por causa da restrição do Streamlit
 pillow>=9.5,<10
+
+# --- REST API ---
+fastapi>=0.111
+uvicorn>=0.29
