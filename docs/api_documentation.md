@@ -675,3 +675,32 @@ Obtém a implementação para um ponto de extensão.
 
 **Retorna:**
 - A implementação para o ponto de extensão, ou None se não suportado
+
+## REST API
+
+O AutoMeetAI também disponibiliza uma API REST simples implementada com
+[FastAPI](https://fastapi.tiangolo.com/). Essa API permite processar arquivos de
+vídeo remotamente e solicitar análises de transcrições.
+
+### Endpoints
+
+| Método | Caminho            | Descrição                                   |
+|-------:|--------------------|---------------------------------------------|
+| `GET`  | `/health`          | Verifica se o serviço está no ar            |
+| `POST` | `/transcriptions`  | Envia um vídeo e retorna a transcrição      |
+| `POST` | `/analysis`        | Analisa um texto de transcrição e retorna o resultado |
+
+### Exemplo de uso
+
+```bash
+curl http://localhost:8000/health
+
+curl -X POST http://localhost:8000/transcriptions \
+     -F "file=@reuniao.mp4" -H "accept: application/json"
+
+curl -X POST http://localhost:8000/analysis \
+     -H "Content-Type: application/json" \
+     -d '{"text": "Olá mundo"}'
+```
+
+Consulte `api.py` para ver a implementação completa da API.
