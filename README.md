@@ -124,6 +124,17 @@ transcription process:
 - `speakers_expected` – expected number of speakers (default `2`)
 - `language_code` – ISO code of the audio language (default `pt`)
 
+### Docker
+
+You can also run the API inside a Docker container. Build the image and start the server with:
+
+```bash
+docker build -t automeetai .
+docker run -e AUTOMEETAI_API_AUTH_TOKEN=your_token -p 8000:8000 automeetai
+```
+
+This will expose the API on `http://localhost:8000`.
+
 ## Extending the Application
 
 The modular architecture makes it easy to extend the application:
