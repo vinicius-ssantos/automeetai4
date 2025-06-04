@@ -39,10 +39,19 @@ class TestAPI(unittest.TestCase):
         response = self.client.post(
             "/transcriptions",
             files={"file": ("test.mp4", b"data", "video/mp4")},
+            params={
+                "speaker_labels": "false",
+                "speakers_expected": "3",
+                "language_code": "en",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["text"], "hello")
         self.mock_app.process_video.assert_called_once()
+        cfg = self.mock_app.process_video.call_args.kwargs.get("transcription_config")
+        self.assertEqual(cfg["speaker_labels"], False)
+        self.assertEqual(cfg["speakers_expected"], 3)
+        self.assertEqual(cfg["language_code"], "en")
 
     def test_analysis_endpoint(self):
         """Verify that the analysis endpoint returns data."""
