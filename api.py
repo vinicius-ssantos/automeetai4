@@ -42,8 +42,17 @@ def health() -> Dict[str, str]:
 
 
 @app.post("/transcriptions")
-async def transcribe(file: UploadFile = File(...)) -> Dict[str, Any]:
-    """Process a video file and return its transcription."""
+async def transcribe(
+    file: UploadFile = File(...),
+    speaker_labels: bool = True,
+    speakers_expected: int = 2,
+    language_code: str = "pt",
+) -> Dict[str, Any]:
+    """Process a video file and return its transcription.
+
+    Parameters are provided as query arguments to control the transcription
+    behavior.
+    """
     temp_path = None
     try:
         suffix = os.path.splitext(file.filename)[1] or ".mp4"
@@ -51,7 +60,14 @@ async def transcribe(file: UploadFile = File(...)) -> Dict[str, Any]:
             tmp.write(await file.read())
             temp_path = tmp.name
 
-        transcription = automeetai.process_video(video_file=temp_path)
+        transcription = automeetai.process_video(
+            video_file=temp_path,
+            transcription_config={
+                "speaker_labels": speaker_labels,
+                "speakers_expected": speakers_expected,
+                "language_code": language_code,
+            },
+        )
         if not transcription:
             raise HTTPException(status_code=500, detail="Transcription failed")
         return _transcription_to_dict(transcription)
