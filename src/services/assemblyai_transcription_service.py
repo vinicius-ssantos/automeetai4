@@ -149,8 +149,21 @@ class AssemblyAITranscriptionService(TranscriptionService):
             # Validate the audio file path
             validate_file_path(audio_file, allowed_extensions=allowed_audio_extensions)
 
+            # Check if the file exists
+            if not os.path.exists(audio_file):
+                error_msg = f"The audio file '{audio_file}' was not found."
+                self.logger.error(error_msg)
+                return None
+
             # Use DEFAULT_CONFIG if no config is provided, otherwise create a new TranscriptionConfig
-            cfg = self.DEFAULT_CONFIG if config is None else TranscriptionConfig(**config)
+            if config is None:
+                cfg = self.DEFAULT_CONFIG
+            else:
+                # If language_code is explicitly provided, disable language_detection
+                if 'language_code' in config:
+                    config['language_detection'] = False
+                    self.logger.info(f"Language code explicitly provided: {config['language_code']}. Disabling automatic language detection.")
+                cfg = TranscriptionConfig(**config)
 
             # Get rate limiter for AssemblyAI
             rate_limiter = RateLimiterRegistry().get_limiter(

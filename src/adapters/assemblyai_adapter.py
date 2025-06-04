@@ -24,14 +24,14 @@ class AssemblyAIAdapter:
             return None
 
         # Check if transcript has the required attributes
-        if not hasattr(transcript, 'utterances'):
-            # Only create a TranscriptionResult if transcript has text attribute and is not an error
-            if hasattr(transcript, 'text') and not hasattr(transcript, 'error'):
+        if not hasattr(transcript, 'utterances') or transcript.utterances is None:
+            # Create a TranscriptionResult with empty utterances if transcript has text attribute
+            if hasattr(transcript, 'text'):
                 return TranscriptionResult(utterances=[], text=transcript.text, audio_file=audio_file)
             return None
 
         utterances = []
-        for u in transcript.utterances:
+        for u in transcript.utterances or []:
             utterances.append(Utterance(
                 speaker=f"Speaker {u.speaker}",
                 text=u.text,
