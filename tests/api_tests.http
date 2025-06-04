@@ -1,0 +1,22 @@
+### Teste de saúde
+GET http://localhost:8000/health
+Accept: application/json
+
+### Transcrição de vídeo
+POST http://localhost:8000/transcriptions?speaker_labels=false&speakers_expected=3&language_code=en
+Content-Type: multipart/form-data
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="reuniao.mp4"
+Content-Type: video/mp4
+
+< ./reuniao.mp4
+--boundary--
+
+### Análise de transcrição
+POST http://localhost:8000/analysis
+Content-Type: application/json
+
+{
+  "text": "Olá mundo"
+}
