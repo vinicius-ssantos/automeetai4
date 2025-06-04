@@ -38,6 +38,10 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         # Caminho de arquivo para testes
         self.audio_file = os.path.join(self.temp_dir, "test_audio.mp3")
 
+        # Criar um arquivo de teste vazio
+        with open(self.audio_file, 'wb') as f:
+            f.write(b'dummy audio content')
+
     def tearDown(self):
         """Limpeza após os testes."""
         # Remover diretório temporário
@@ -46,20 +50,29 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
 
     @patch('src.services.assemblyai_transcription_service.validate_file_path')
     @patch('src.services.assemblyai_transcription_service.RateLimiterRegistry')
-    @patch('src.services.assemblyai_transcription_service.aai')
+    @patch('src.services.assemblyai_transcription_service.Transcriber')
     @patch('src.services.assemblyai_transcription_service.AssemblyAIAdapter')
-    def test_transcribe_success(self, mock_adapter, mock_aai, mock_rate_limiter_registry, mock_validate):
+    def test_transcribe_success(self, mock_adapter, mock_transcriber_class, mock_rate_limiter_registry, mock_validate):
         """Testa a transcrição bem-sucedida de um arquivo de áudio."""
         # Configurar mocks
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
-        mock_transcriber = Mock()
-        mock_aai.Transcriber.return_value = mock_transcriber
+        # Ensure validate_file_path doesn't raise an exception
+        # The function should return the file path it was called with
+        mock_validate.side_effect = lambda file_path, **kwargs: file_path
 
+        # Mock the Transcriber instance
+        mock_transcriber_instance = Mock()
+        mock_transcriber_class.return_value = mock_transcriber_instance
+
+        # Mock the transcript
         mock_transcript = Mock()
-        mock_transcriber.transcribe.return_value = mock_transcript
+        mock_transcript.text = "Test transcript"
+        mock_transcript.utterances = []
+        mock_transcriber_instance.transcribe.return_value = mock_transcript
 
+        # Mock the conversion result
         mock_result = Mock(spec=TranscriptionResult)
         mock_adapter.convert.return_value = mock_result
 
@@ -74,27 +87,37 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         # Verificar se os métodos foram chamados corretamente
         mock_validate.assert_called_once()
         mock_rate_limiter.consume.assert_called_once_with(wait=True)
-        mock_transcriber.transcribe.assert_called_once()
+        mock_transcriber_instance.transcribe.assert_called_once()
         mock_adapter.convert.assert_called_once_with(mock_transcript, self.audio_file)
 
     @patch('src.services.assemblyai_transcription_service.validate_file_path')
     @patch('src.services.assemblyai_transcription_service.RateLimiterRegistry')
-    @patch('src.services.assemblyai_transcription_service.aai')
+    @patch('src.services.assemblyai_transcription_service.TranscriptionConfig')
+    @patch('src.services.assemblyai_transcription_service.Transcriber')
     @patch('src.adapters.assemblyai_adapter.AssemblyAIAdapter.convert')
-    def test_transcribe_with_custom_config(self, mock_convert, mock_aai, mock_rate_limiter_registry, mock_validate):
+    def test_transcribe_with_custom_config(self, mock_convert, mock_transcriber_class, mock_config_class, mock_rate_limiter_registry, mock_validate):
         """Testa a transcrição com configurações personalizadas."""
         # Configurar mocks
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
-        mock_transcriber = Mock()
-        mock_aai.Transcriber.return_value = mock_transcriber
+        # Ensure validate_file_path doesn't raise an exception
+        # The function should return the file path it was called with
+        mock_validate.side_effect = lambda file_path, **kwargs: file_path
+
+        # Mock TranscriptionConfig to ensure it's called
+        mock_config = Mock()
+        mock_config_class.return_value = mock_config
+
+        # Mock the Transcriber instance
+        mock_transcriber_instance = Mock()
+        mock_transcriber_class.return_value = mock_transcriber_instance
 
         # Configurar mock para retornar um resultado de transcrição
         mock_transcript = Mock()
         mock_transcript.utterances = []
         mock_transcript.text = "Test transcript"
-        mock_transcriber.transcribe.return_value = mock_transcript
+        mock_transcriber_instance.transcribe.return_value = mock_transcript
 
         # Configurar mock para o convert
         mock_result = Mock()
@@ -114,11 +137,11 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         self.assertEqual(result, mock_result)
 
         # Verificar se o TranscriptionConfig foi chamado
-        self.assertTrue(mock_aai.TranscriptionConfig.called)
+        self.assertTrue(mock_config_class.called)
 
         # Verificar se os parâmetros principais foram passados corretamente
         # Agora estamos passando um dicionário filtrado para o TranscriptionConfig
-        call_args = mock_aai.TranscriptionConfig.call_args
+        call_args = mock_config_class.call_args
         # Verificar se foi chamado com **kwargs (um dicionário)
         self.assertEqual(len(call_args[0]), 0)  # Sem argumentos posicionais
         self.assertTrue(len(call_args[1]) > 0)  # Com argumentos nomeados
@@ -207,11 +230,16 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
     @patch('src.services.assemblyai_transcription_service.validate_file_path')
     @patch('src.services.assemblyai_transcription_service.RateLimiterRegistry')
     @patch('src.services.assemblyai_transcription_service.aai')
-    def test_transcribe_general_exception(self, mock_aai, mock_rate_limiter_registry, mock_validate):
+    @patch('src.adapters.assemblyai_adapter.AssemblyAIAdapter.convert', return_value=None)
+    def test_transcribe_general_exception(self, mock_convert, mock_aai, mock_rate_limiter_registry, mock_validate):
         """Testa o comportamento quando ocorre uma exceção genérica."""
         # Configurar mocks
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
+
+        # Ensure validate_file_path doesn't raise an exception
+        # The function should return the file path it was called with
+        mock_validate.side_effect = lambda file_path, **kwargs: file_path
 
         mock_transcriber = Mock()
         mock_aai.Transcriber.return_value = mock_transcriber
@@ -236,11 +264,16 @@ class TestAssemblyAITranscriptionService(unittest.TestCase):
         mock_rate_limiter = Mock()
         mock_rate_limiter_registry.return_value.get_limiter.return_value = mock_rate_limiter
 
+        # Ensure validate_file_path doesn't raise an exception
+        # The function should return the file path it was called with
+        mock_validate.side_effect = lambda file_path, **kwargs: file_path
+
         mock_transcriber_instance = Mock()
         mock_transcriber.return_value = mock_transcriber_instance
 
         mock_transcript = Mock()
         mock_transcript.text = "Test transcript"
+        mock_transcript.utterances = []
         mock_transcriber_instance.transcribe.return_value = mock_transcript
 
         # Chamar o método transcribe sem fornecer config (deve usar DEFAULT_CONFIG)
