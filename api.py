@@ -19,6 +19,7 @@ logger = get_logger(__name__)
 
 app = FastAPI(title="AutoMeetAI API")
 
+
 # API authentication token from configuration
 _config = EnvConfigProvider()
 API_AUTH_TOKEN = _config.get("api_auth_token")
@@ -28,6 +29,7 @@ if API_AUTH_TOKEN:
     except ValueError as exc:
         logger.error(f"Invalid API authentication token: {exc}")
         API_AUTH_TOKEN = None
+
 
 
 def require_api_key(x_api_key: str = Header(None)) -> None:

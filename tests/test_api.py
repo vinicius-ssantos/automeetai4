@@ -7,6 +7,8 @@ from fastapi.testclient import TestClient
 # Configure API authentication for tests
 os.environ["AUTOMEETAI_API_AUTH_TOKEN"] = "testtoken123"
 
+
+
 # Allow importing the project root
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -47,7 +49,9 @@ class TestAPI(unittest.TestCase):
                 "speakers_expected": "3",
                 "language_code": "en",
             },
+
             headers={"X-API-Key": "testtoken123"},
+
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["text"], "hello")
@@ -65,6 +69,7 @@ class TestAPI(unittest.TestCase):
             "/analysis",
             json={"text": "hello", "system_prompt": "sys", "user_prompt": "user {transcription}"},
             headers={"X-API-Key": "testtoken123"},
+
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"analysis": "summary"})
@@ -81,6 +86,7 @@ class TestAPI(unittest.TestCase):
             "/graphql",
             json={"query": "{ health }"},
             headers={"X-API-Key": "testtoken123"},
+
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["health"], "ok")
@@ -93,6 +99,7 @@ class TestAPI(unittest.TestCase):
             "/graphql",
             json={"query": mutation},
             headers={"X-API-Key": "testtoken123"},
+
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["data"]["analyze"], "summary")
