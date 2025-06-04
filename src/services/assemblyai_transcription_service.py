@@ -1,4 +1,5 @@
 from typing import Optional, Dict, Any, List, Union
+import os
 # Import the pydantic patch before importing assemblyai
 from src.patches.pydantic_patch import *
 import assemblyai as aai
@@ -76,14 +77,16 @@ class AssemblyAITranscriptionService(TranscriptionService):
         speech_model=None,
     )
 
-    def __init__(self, config_provider: Optional[ConfigProvider] = None):
+    def __init__(self, config_provider: Optional[ConfigProvider] = None, transcriber: Optional[Transcriber] = None):
         """
         Initialize the transcription service.
 
         Args:
             config_provider: Optional configuration provider
+            transcriber: Optional transcriber instance for testing
         """
         self.config_provider = config_provider
+        self.transcriber = transcriber
 
         # Set API key from config provider or default
         api_key = None
@@ -176,8 +179,8 @@ class AssemblyAITranscriptionService(TranscriptionService):
             # Wait for a token to become available (rate limiting)
             rate_limiter.consume(wait=True)
 
-            # Create transcriber and transcribe
-            transcriber = Transcriber()
+            # Use injected transcriber or create a new one
+            transcriber = self.transcriber or Transcriber()
             transcript = transcriber.transcribe(audio_file, **{'config': cfg})
 
         except FileNotFoundError:

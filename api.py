@@ -1,5 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Header, Request
-from starlette_graphene3 import GraphQLApp, make_playground_handler
+try:
+    from starlette_graphene3 import GraphQLApp, make_playground_handler
+except ImportError:
+    # Provide a helpful error message
+    raise ImportError(
+        "The 'starlette_graphene3' module is not installed. "
+        "Please install it with: pip install starlette-graphene3"
+    )
+
 import graphene
 from pydantic import BaseModel
 import os
