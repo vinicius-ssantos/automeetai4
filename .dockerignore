@@ -1,0 +1,12 @@
+tests/
+docs/
+.git/
+cache/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.tmp
+*.log
+*.swp
+.DS_Store
