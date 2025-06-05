@@ -9,6 +9,7 @@ AutoMeetAI is a Python application that automates the process of transcribing an
 - Analyze transcriptions using AI to extract insights
 - Command-line interface for easy use
 - Modular architecture following SOLID principles
+- Asynchronous batch processing using a message queue
 
 ## Architecture
 

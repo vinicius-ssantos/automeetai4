@@ -98,7 +98,12 @@ valid_filename = st.text(
     alphabet=valid_path_chars,
     min_size=1,
     max_size=50
-).filter(lambda s: not s.isspace() and s not in ('.', '..'))
+).filter(
+    lambda s: not s.isspace()
+    and s not in ('.', '..')
+    and '..' not in s
+    and not s.endswith('.')
+)
 
 valid_extension = st.text(
     alphabet=st.characters(

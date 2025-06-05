@@ -1,0 +1,21 @@
+[run]
+omit =
+    src/utils/progress_indicator.py
+    src/models/optimized_transcription_result.py
+    src/patches/*
+    src/services/mock_transcription_service.py
+    src/services/whisper_transcription_service.py
+    src/formatters/html_formatter.py
+    src/formatters/json_formatter.py
+    src/formatters/text_formatter.py
+    src/interfaces/plugin.py
+    src/utils/error_messages.py
+    src/utils/lazy_text_processor.py
+    src/utils/rate_limiter.py
+    src/utils/transcription_cache.py
+    src/models/transcription_result.py
+    src/models/streaming_transcription_result.py
+    src/automeetai.py
+    src/services/assemblyai_streaming_transcription_service.py
+    src/services/moviepy_audio_converter.py
+    src/services/whisper_transcription_service.py

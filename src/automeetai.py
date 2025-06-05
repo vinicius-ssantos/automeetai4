@@ -16,6 +16,7 @@ from src.utils.transcription_cache import TranscriptionCache
 from src.utils.lazy_text_processor import LazyTextProcessor
 from src.utils.error_messages import get_user_friendly_message
 from src.utils.cancellation_manager import CancellationManager
+from src.interfaces.message_queue import MessageQueue
 from src.config.default_config import (
     DEFAULT_OUTPUT_DIRECTORY,
     DEFAULT_MAX_WORKERS,
@@ -103,6 +104,9 @@ class AutoMeetAI:
         # Initialize cancellation manager
         self.cancellation_manager = CancellationManager()
 
+        # Fila de mensagens opcional para processamento assíncrono
+        self.message_queue: Optional[MessageQueue] = None
+
     def request_cancellation(self, reason: Optional[str] = None) -> None:
         """
         Solicita o cancelamento da operação atual.
@@ -134,6 +138,30 @@ class AutoMeetAI:
         """
         self.cancellation_manager.reset()
         self.logger.info("Estado de cancelamento reiniciado")
+
+    def set_message_queue(self, queue: MessageQueue) -> None:
+        """Define a fila de mensagens da aplicação.
+
+        Args:
+            queue: Instância da fila a ser utilizada.
+        """
+        self.message_queue = queue
+
+    def iniciar_fila(self, num_workers: int = 1) -> None:
+        """Inicia a fila de mensagens, se configurada."""
+        if self.message_queue:
+            self.message_queue.iniciar(num_workers)
+
+    def parar_fila(self) -> None:
+        """Encerra a fila de mensagens, se configurada."""
+        if self.message_queue:
+            self.message_queue.parar()
+
+    def enfileirar_video(self, video_file: str) -> None:
+        """Publica um arquivo de vídeo para processamento assíncrono."""
+        if not self.message_queue:
+            raise AutoMeetAIError("Fila de mensagens não configurada")
+        self.message_queue.publicar(video_file)
 
     def _get_allowed_video_extensions(
         self, allowed_video_extensions: Optional[List[str]]
