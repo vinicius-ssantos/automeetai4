@@ -4,9 +4,20 @@ Utilitário para validação de valores de configuração.
 from typing import Any, Dict, Optional, List, Union, Callable
 import os
 from src.utils.logging import get_logger
+import re
 
 # Initialize logger for this module
 logger = get_logger(__name__)
+
+# Supported IETF language codes (language or language-region)
+_SUPPORTED_LANGUAGE_CODES = {
+    "pt", "pt-br", "pt-pt", "en", "en-us", "en-gb", "es", "es-es", "es-mx",
+    "fr", "fr-fr", "de", "de-de", "it", "it-it", "nl", "ja", "ja-jp", "ko",
+    "ko-kr", "zh", "zh-cn", "zh-tw", "ru",
+}
+
+# Pattern to validate language codes like "xx" or "xx-yy"
+_LANGUAGE_CODE_PATTERN = re.compile(r"^[a-zA-Z]{2}(?:-[a-zA-Z]{2})?$")
 
 
 class ConfigValidator:
@@ -123,13 +134,19 @@ class ConfigValidator:
         if not isinstance(code, str):
             raise ValueError("Language code must be a string.")
 
-        # Lista de códigos de idioma válidos (simplificada)
-        valid_codes = ["pt", "en", "es", "fr", "de", "it", "nl", "ja", "ko", "zh", "ru"]
-        
-        if code.lower() not in valid_codes:
-            logger.warning(f"Language code '{code}' may not be supported. Valid codes include: {', '.join(valid_codes)}")
+        # Validate format "xx" or "xx-yy"
+        if not _LANGUAGE_CODE_PATTERN.match(code):
+            raise ValueError("Language code must be in format 'xx' or 'xx-yy'.")
 
-        return code
+        normalized = code.lower()
+
+        if normalized not in _SUPPORTED_LANGUAGE_CODES:
+            logger.warning(
+                f"Language code '{code}' may not be officially supported. Valid codes include: "
+                f"{', '.join(sorted(_SUPPORTED_LANGUAGE_CODES))}"
+            )
+
+        return normalized
 
     @staticmethod
     def validate_speakers_expected(count: int) -> int:
