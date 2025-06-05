@@ -138,6 +138,19 @@ transcription process:
 - `speakers_expected` – expected number of speakers (default `2`)
 - `language_code` – ISO code of the audio language (default `pt`)
 
+## Docker
+
+Docker makes it easy to run AutoMeetAI without installing Python or dependencies.
+
+Build the image and start the API with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+Then access the API at `http://localhost:8000`. Set the `AUTOMEETAI_API_AUTH_TOKEN` environment variable in `docker-compose.yml` to secure your deployment.
+
+
 ## Extending the Application
 
 The modular architecture makes it easy to extend the application:

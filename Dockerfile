@@ -1,17 +1,15 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies first
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r requirements-dev.txt
 
-# Copy application source
-COPY src ./src
-COPY app.py api.py stream_transcribe.py .
+# Copy application code
+COPY . .
 
-# Create and use a non-root user
-RUN useradd -m appuser
-USER appuser
+EXPOSE 8000
 
-CMD ["python", "app.py"]
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
