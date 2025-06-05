@@ -135,6 +135,44 @@ class AutoMeetAI:
         self.cancellation_manager.reset()
         self.logger.info("Estado de cancelamento reiniciado")
 
+    def _get_allowed_video_extensions(
+        self, allowed_video_extensions: Optional[List[str]]
+    ) -> List[str]:
+        """Retorna a lista de extensões de vídeo permitidas.
+
+        Args:
+            allowed_video_extensions: Lista fornecida pelo usuário.
+
+        Returns:
+            List[str]: Lista final de extensões permitidas.
+        """
+        if allowed_video_extensions is not None:
+            return allowed_video_extensions
+        return self.config_provider.get(
+            "allowed_input_extensions",
+            ["mp4", "avi", "mov", "mkv", "wmv", "flv", "webm"],
+        )
+
+    def _validate_video_file(
+        self, video_file: str, allowed_video_extensions: Optional[List[str]]
+    ) -> None:
+        """Valida o caminho do arquivo de vídeo informado.
+
+        Args:
+            video_file: Caminho do arquivo de vídeo.
+            allowed_video_extensions: Extensões de vídeo permitidas.
+
+        Raises:
+            ValueError: Se o arquivo for inválido.
+        """
+        validate_file_path(
+            video_file, allowed_extensions=self._get_allowed_video_extensions(allowed_video_extensions)
+        )
+
+    def _generate_audio_filename(self) -> str:
+        """Gera um nome de arquivo único para o áudio de saída."""
+        return generate_unique_filename("mp3", directory=self.output_directory)
+
     def process_video(
         self, 
         video_file: str, 
@@ -231,16 +269,8 @@ class AutoMeetAI:
             current_step = 0
             report_progress("Validando arquivo de entrada", 0.5)
 
-            # Set default allowed extensions if not provided
-            if allowed_video_extensions is None:
-                allowed_video_extensions = self.config_provider.get(
-                    "allowed_input_extensions", 
-                    ["mp4", "avi", "mov", "mkv", "wmv", "flv", "webm"]
-                )
-
-            # Validate the video file path
             try:
-                validate_file_path(video_file, allowed_extensions=allowed_video_extensions)
+                self._validate_video_file(video_file, allowed_video_extensions)
                 report_progress("Arquivo validado", 1.0)
                 # Check for cancellation after validation
                 check_cancellation()
@@ -271,7 +301,7 @@ class AutoMeetAI:
 
             # Generate a unique filename for the audio file
             try:
-                audio_file = generate_unique_filename("mp3", directory=self.output_directory)
+                audio_file = self._generate_audio_filename()
             except Exception as e:
                 raise FileError(f"Failed to generate output filename: {e}") from e
 
