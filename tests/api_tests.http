@@ -1,10 +1,12 @@
 ### Teste de saúde
 GET http://localhost:8000/health
 Accept: application/json
+X-API-Key: automeetai-api-key-12345
 
 ### Transcrição de vídeo
-POST http://localhost:8000/transcriptions?speaker_labels=false&speakers_expected=3&language_code=en
+POST http://localhost:8000/transcriptions?speaker_labels=false&speakers_expected=3&language_code=pt
 Content-Type: multipart/form-data; boundary=boundary
+X-API-Key: automeetai-api-key-12345
 
 --boundary
 Content-Disposition: form-data; name="file"; filename="entrevista.mp4"
@@ -16,7 +18,8 @@ Content-Type: video/mp4
 ### Análise de transcrição
 POST http://localhost:8000/analysis
 Content-Type: application/json
+X-API-Key: automeetai-api-key-12345
 
 {
-  "text": "QUANTO É 1 +1 ?"
+  "text": "A entrevista foi muito produtiva. O candidato demonstrou um bom conhecimento técnico e habilidades interpessoais."
 }

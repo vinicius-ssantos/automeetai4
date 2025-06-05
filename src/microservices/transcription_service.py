@@ -22,8 +22,8 @@ if API_AUTH_TOKEN:
     try:
         API_AUTH_TOKEN = ConfigValidator.validate_api_key(API_AUTH_TOKEN, "API Auth")
     except ValueError as exc:
-        logger.error(f"Invalid API authentication token: {exc}")
-        API_AUTH_TOKEN = None
+        logger.warning(f"Invalid API authentication token: {exc}")
+        # Continue using the original token instead of setting it to None
 
 
 

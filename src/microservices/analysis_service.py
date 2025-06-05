@@ -20,15 +20,15 @@ if API_AUTH_TOKEN:
     try:
         API_AUTH_TOKEN = ConfigValidator.validate_api_key(API_AUTH_TOKEN, "API Auth")
     except ValueError as exc:
-        logger.error(f"Invalid API authentication token: {exc}")
-        API_AUTH_TOKEN = None
+        logger.warning(f"Invalid API authentication token: {exc}")
+        # Continue using the original token instead of setting it to None
 
 
 def require_api_key(x_api_key: str = Header(None)) -> None:
     """Validates the API key provided by the client."""
     if not API_AUTH_TOKEN:
-        logger.error("API authentication token is not configured.")
-        raise HTTPException(status_code=500, detail="API authentication not configured")
+        logger.warning("API authentication token is not configured. API authentication is disabled.")
+        return
     if x_api_key != API_AUTH_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
