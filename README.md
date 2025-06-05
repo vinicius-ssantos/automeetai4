@@ -53,6 +53,20 @@ automeetai/
    - Set environment variable `AUTOMEETAI_ASSEMBLYAI_API_KEY` with your AssemblyAI API key
    - Set environment variable `AUTOMEETAI_OPENAI_API_KEY` with your OpenAI API key (optional)
 
+## Docker
+
+A `Dockerfile` is provided to build a container image. The accompanying
+`.dockerignore` excludes `tests/`, `docs/`, `.git/`, `cache/` and temporary
+files so the build context remains small. The image installs dependencies from
+`requirements.txt` and creates a non-root user called `appuser` for safer
+execution.
+
+Build the image with:
+
+```bash
+docker build -t automeetai .
+```
+
 ## Usage
 
 ### Command Line
