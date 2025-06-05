@@ -57,6 +57,8 @@ As configurações são definidas em `src/config/default_config.py` e podem ser 
 | `DEFAULT_SPEAKER_LABELS` | `bool` | `True` | Se deve identificar falantes diferentes na transcrição. | `AUTOMEETAI_DEFAULT_SPEAKER_LABELS` |
 | `DEFAULT_SPEAKERS_EXPECTED` | `int` | `2` | Número esperado de falantes na transcrição. | `AUTOMEETAI_DEFAULT_SPEAKERS_EXPECTED` |
 
+O valor `language_code` segue o padrão IETF, permitindo códigos como `en-US`, `pt-BR` ou `es-ES`. Os códigos atualmente suportados são: `pt`, `pt-BR`, `pt-PT`, `en`, `en-US`, `en-GB`, `es`, `es-ES`, `es-MX`, `fr`, `fr-FR`, `de`, `de-DE`, `it`, `it-IT`, `nl`, `ja`, `ja-JP`, `ko`, `ko-KR`, `zh`, `zh-CN`, `zh-TW` e `ru`.
+
 ## Configuração de Arquivos
 
 | Opção | Tipo | Padrão | Descrição | Variável de Ambiente |
