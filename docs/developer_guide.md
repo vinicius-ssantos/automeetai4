@@ -13,6 +13,7 @@ Este guia fornece instruções detalhadas para desenvolvedores que desejam esten
 7. [Criando um Plugin](#criando-um-plugin)
 8. [Estendendo o CLI](#estendendo-o-cli)
 9. [Melhores Práticas](#melhores-práticas)
+10. [Arquitetura de Microsserviços](#arquitetura-de-microsservicos)
 
 ## Arquitetura do Sistema
 
@@ -741,3 +742,7 @@ Ao estender o AutoMeetAI, siga estas melhores práticas:
 10. **Atualize a documentação**: Atualize a documentação da API e os exemplos de uso quando adicionar novas funcionalidades.
 
 Seguindo este guia, você poderá estender o AutoMeetAI de forma eficaz e manter a qualidade do código.
+
+## Arquitetura de Microsservicos
+
+Consulte o documento [Arquitetura de Microsserviços](microservices_architecture.md) para entender como o projeto foi dividido em serviços independentes.
