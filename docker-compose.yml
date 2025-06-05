@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  automeetai:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - AUTOMEETAI_API_AUTH_TOKEN=changeme
