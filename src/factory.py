@@ -116,7 +116,9 @@ class AutoMeetAIFactory(AutoMeetAIFactoryInterface):
         plugin_preferences: Optional[Dict[str, str]] = None,
         transcription_service_type: str = "assemblyai",
         use_user_preferences: bool = True,
-        user_preferences_file: str = "user_preferences.json"
+        user_preferences_file: str = "user_preferences.json",
+        use_message_queue: bool = False,
+        queue_workers: int = 1
     ) -> AutoMeetAI:
         """
         Cria uma nova instância do AutoMeetAI com todas as dependências necessárias.
@@ -142,6 +144,8 @@ class AutoMeetAIFactory(AutoMeetAIFactoryInterface):
             transcription_service_type: Tipo de serviço de transcrição a ser utilizado ("assemblyai", "whisper" ou "mock")
             use_user_preferences: Indica se as preferências do usuário devem ser utilizadas
             user_preferences_file: Caminho para o arquivo de preferências do usuário
+            use_message_queue: Se True, inicializa uma fila de mensagens para processamento assíncrono
+            queue_workers: Número de workers para a fila de mensagens
 
         Returns:
             AutoMeetAI: Uma instância configurada do AutoMeetAI
@@ -238,8 +242,8 @@ class AutoMeetAIFactory(AutoMeetAIFactoryInterface):
             else:
                 services["text_generation_service"] = NullTextGenerationService()
 
-        # Create and return the application
-        return AutoMeetAI(
+        # Create the application
+        app = AutoMeetAI(
             config_provider=config_provider,
             audio_converter=services["audio_converter"],
             transcription_service=services["transcription_service"],
@@ -247,3 +251,13 @@ class AutoMeetAIFactory(AutoMeetAIFactoryInterface):
             use_cache=use_cache,
             cache_dir=cache_dir
         )
+
+        # Configure message queue if requested
+        if use_message_queue:
+            from src.services.in_memory_message_queue import InMemoryMessageQueue
+
+            queue = InMemoryMessageQueue(lambda path: app.process_video(path))
+            app.set_message_queue(queue)
+            app.iniciar_fila(queue_workers)
+
+        return app

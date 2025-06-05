@@ -743,6 +743,12 @@ Ao estender o AutoMeetAI, siga estas melhores práticas:
 
 Seguindo este guia, você poderá estender o AutoMeetAI de forma eficaz e manter a qualidade do código.
 
+## Execução de Testes
+
+Utilize o script `tests/run_tests_with_coverage.py` para rodar a suíte de testes.
+O projeto define um arquivo `.coveragerc` que exclui módulos auxiliares da
+análise, permitindo alcançar a cobertura mínima de 70% exigida pelo script.
+
 ## Arquitetura de Microsservicos
 
 Consulte o documento [Arquitetura de Microsserviços](microservices_architecture.md) para entender como o projeto foi dividido em serviços independentes.
