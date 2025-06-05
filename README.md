@@ -111,18 +111,26 @@ analysis = app.analyze_transcription(
 
 ### REST API
 
-You can also interact with AutoMeetAI through a simple REST API built with
-FastAPI. The API requires an authentication token provided via the
-`AUTOMEETAI_API_AUTH_TOKEN` environment variable. Clients must send this token in
-the `X-API-Key` header when calling protected endpoints.
+You can interact with AutoMeetAI through REST APIs built with FastAPI. An
+authentication token is provided via the
+`AUTOMEETAI_API_AUTH_TOKEN` environment variable and must be sent in the
+`X-API-Key` header when calling protected endpoints.
 
-After installing the dependencies, run:
+Previously a single monolithic API was provided. The project now offers two
+independent microservices:
+
+1. **Transcription Service** – handles file uploads and returns the
+   transcription result.
+2. **Analysis Service** – performs analysis on previously generated
+   transcriptions.
+
+For development you can still run the original API with:
 
 ```bash
 uvicorn api:app --reload
 ```
 
-This will start a server on `http://localhost:8000` exposing the following
+This starts a server on `http://localhost:8000` exposing the following
 endpoints:
 
 - `GET /health` – basic health check
@@ -142,13 +150,18 @@ transcription process:
 
 Docker makes it easy to run AutoMeetAI without installing Python or dependencies.
 
-Build the image and start the API with Docker Compose:
+Build the images and start the microservices with Docker Compose:
 
 ```bash
 docker compose up --build
 ```
 
-Then access the API at `http://localhost:8000`. Set the `AUTOMEETAI_API_AUTH_TOKEN` environment variable in `docker-compose.yml` to secure your deployment.
+The services will be available at:
+
+- `http://localhost:8001` – Transcription Service
+- `http://localhost:8002` – Analysis Service
+
+Set the `AUTOMEETAI_API_AUTH_TOKEN` environment variable in `docker-compose.yml` to secure your deployment.
 
 
 ## Extending the Application

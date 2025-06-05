@@ -1,8 +1,16 @@
 version: '3.9'
 services:
-  automeetai:
+  transcription-service:
     build: .
+    command: uvicorn src.microservices.transcription_service:app --host 0.0.0.0 --port 8000
     ports:
-      - "8000:8000"
+      - "8001:8000"
+    environment:
+      - AUTOMEETAI_API_AUTH_TOKEN=changeme
+  analysis-service:
+    build: .
+    command: uvicorn src.microservices.analysis_service:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8002:8000"
     environment:
       - AUTOMEETAI_API_AUTH_TOKEN=changeme
